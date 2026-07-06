@@ -41,8 +41,8 @@
       <div class="flex items-center gap-2">
         <span class="grid place-items-center w-8 h-8 rounded-xl text-base shrink-0"
               style="background:linear-gradient(160deg,rgba(198,255,50,0.22),rgba(47,240,214,0.12));border:1px solid rgba(198,255,50,0.35);box-shadow:0 0 20px -6px rgba(150,210,0,0.5);">🎾</span>
-        <h1 class="h-display font-extrabold text-[21px] leading-none whitespace-nowrap">
-          <span class="tx">PADEL</span><span class="gradient-text">ARENA</span>
+        <h1 class="h-display font-extrabold text-[22px] leading-none whitespace-nowrap">
+          <span class="tx">Padel</span><span class="gradient-text">6</span>
         </h1>
       </div>
       <p class="text-[10px] tx-faint tracking-[0.2em] uppercase ml-[40px] mt-1 font-semibold truncate">{titles[active]}</p>

@@ -2,11 +2,22 @@
   import Avatar from './Avatar.svelte';
   let { badge } = $props();
   let flipped = $state(false);
+  let elevated = $state(false); // keep the card above its neighbours while it flips
+  let timer;
+
+  function toggle() {
+    flipped = !flipped;
+    elevated = true;
+    clearTimeout(timer);
+    // once the 3D rotation finishes, only stay raised if we're showing the back
+    timer = setTimeout(() => (elevated = flipped), 520);
+  }
 </script>
 
 <button
   class="relative w-full h-[178px] [perspective:1000px] text-left"
-  onclick={() => (flipped = !flipped)}
+  style="z-index:{elevated ? 30 : 1}"
+  onclick={toggle}
   aria-label="{badge.title} — tap to flip"
 >
   <div
