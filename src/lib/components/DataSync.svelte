@@ -2,11 +2,33 @@
   import { fade } from 'svelte/transition';
   import { exportState, parseImport } from '../logic/persistence.js';
   import { currentState, replaceState, resetAll } from '../stores/store.js';
+  import { syncStatus, syncNow } from '../logic/sync.js';
 
   let fileInput;
   let toast = $state('');
   let confirmImport = $state(null); // parsed pending state
   let confirmReset = $state(false);
+
+  const cloud = $derived({
+    connecting: { icon: '⏳', label: 'Connecting to the group…', tone: 'var(--tx-muted)' },
+    syncing: { icon: '☁️', label: 'Syncing changes…', tone: 'var(--accent-fg)' },
+    synced: { icon: '✅', label: 'Shared live with your group', tone: 'var(--accent-fg)' },
+    local: { icon: '📴', label: 'Local only on this device', tone: '#ff8a3a' },
+  }[$syncStatus.mode]);
+
+  function agoText(ts) {
+    if (!ts) return '';
+    const s = Math.round((Date.now() - ts) / 1000);
+    if (s < 5) return 'just now';
+    if (s < 60) return `${s}s ago`;
+    return `${Math.round(s / 60)}m ago`;
+  }
+
+  let now = $state(Date.now());
+  $effect(() => {
+    const t = setInterval(() => (now = Date.now()), 5000);
+    return () => clearInterval(t);
+  });
 
   function flash(msg) {
     toast = msg;
@@ -48,11 +70,29 @@
 </script>
 
 <div class="space-y-3">
+  <!-- Live cloud sync status -->
+  <div class="card flex items-center gap-3" style="border-color:color-mix(in srgb, {cloud.tone} 35%, transparent);">
+    <span class="text-2xl">{cloud.icon}</span>
+    <div class="min-w-0 flex-1">
+      <div class="font-display font-bold text-sm" style="color:{cloud.tone};">{cloud.label}</div>
+      <div class="text-xs tx-faint">
+        {#if $syncStatus.mode === 'synced' && $syncStatus.lastSync}
+          {(now, agoText($syncStatus.lastSync))} · all 6 phones share one board
+        {:else if $syncStatus.mode === 'local'}
+          Cloud unreachable — changes save on this phone only
+        {:else}
+          Everyone who opens the site sees & edits the same stats
+        {/if}
+      </div>
+    </div>
+    <button class="btn btn-ghost px-3 py-2 text-sm shrink-0" onclick={syncNow}>Sync now</button>
+  </div>
+
   <div class="card space-y-1">
-    <h3 class="font-display font-bold neon-text">Data Sync</h3>
+    <h3 class="font-display font-bold neon-text">Backup & Transfer</h3>
     <p class="text-sm tx-muted">
-      No server, no accounts. Everything lives on this phone. Export to back up or share the
-      group's stats to another device, then Import there to sync.
+      Stats sync automatically across the group. You can also Export a
+      <code class="tx">padel_stats.json</code> backup, or Import one to overwrite everywhere.
     </p>
   </div>
 

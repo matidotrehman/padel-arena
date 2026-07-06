@@ -1,9 +1,14 @@
-# Netlify — 100% free static hosting, zero backend.
+# Netlify — 100% free static hosting + serverless function for shared state.
 [build]
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # SPA fallback so any path serves the app shell.
+# (Netlify routes /.netlify/functions/* to functions before this runs.)
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -10,6 +10,9 @@
   import PlayersManager from './lib/components/PlayersManager.svelte';
   import StatCard from './lib/components/StatCard.svelte';
   import { initialTheme, applyTheme } from './lib/logic/theme.js';
+  import { startSync } from './lib/logic/sync.js';
+
+  startSync(); // begin sharing state with the group (fails soft to local-only)
 
   let active = $state('leaderboard');
   let theme = $state(initialTheme());

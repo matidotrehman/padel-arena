@@ -16,6 +16,7 @@
     "vite": "^6.0.7"
   },
   "dependencies": {
+    "@netlify/blobs": "^8.1.0",
     "canvas-confetti": "^1.9.3"
   }
 }
