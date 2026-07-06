@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+/* ---- Neon Padel-court theme tokens ---- */
+@theme {
+  --color-court-950: #070708;
+  --color-court-900: #0a0a0b;
+  --color-court-850: #101013;
+  --color-court-800: #17171c;
+  --color-court-700: #23232b;
+  --color-court-600: #34343f;
+  --color-neon-green: #b6ff2e;
+  --color-neon-lime: #d4ff4d;
+  --color-neon-yellow: #f5ff3d;
+  --color-neon-cyan: #22e0c8;
+  --color-hot: #ff5e3a;
+  --color-ice: #56c8ff;
+
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  --shadow-neon: 0 0 0 1px rgba(182, 255, 46, 0.25), 0 0 24px -6px rgba(182, 255, 46, 0.45);
+}
+
+/* ---- Base ---- */
+html {
+  background: var(--color-court-950);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  color: #e7e7ea;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(182, 255, 46, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 100% 100%, rgba(34, 224, 200, 0.06), transparent 55%),
+    var(--color-court-950);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ---- Reusable utility layer ---- */
+/* Shared glass surface — plain CSS so it can be reused inside @layer without @apply. */
+.glass,
+.card,
+.btn-ghost {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+}
+
+@layer components {
+
+  .neon-text {
+    color: var(--color-neon-green);
+    text-shadow: 0 0 18px rgba(182, 255, 46, 0.55);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold tracking-wide transition-all duration-150 active:scale-95 select-none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(180deg, var(--color-neon-lime), var(--color-neon-green));
+    color: #0a0a0b;
+    box-shadow: 0 6px 20px -6px rgba(182, 255, 46, 0.6);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-ghost {
+    @apply text-white/90;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(182, 255, 46, 0.4);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+
+  .card {
+    @apply rounded-2xl p-4;
+  }
+
+  .input {
+    @apply w-full rounded-xl bg-court-800 border border-white/10 px-3 py-2.5 text-white outline-none transition;
+  }
+  .input:focus {
+    border-color: var(--color-neon-green);
+    box-shadow: 0 0 0 3px rgba(182, 255, 46, 0.15);
+  }
+
+  .label {
+    @apply text-xs font-semibold uppercase tracking-widest text-white/45 mb-1.5 block;
+  }
+}
+
+/* Number stepper — hide native spinners for a cleaner courtside feel */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Thin neon scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(182, 255, 46, 0.25);
+  border-radius: 8px;
+}
