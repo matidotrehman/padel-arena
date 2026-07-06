@@ -21,9 +21,9 @@
 
 <div class="glass rounded-2xl p-3 space-y-2.5" style={done ? 'border-color:rgba(182,255,46,0.25);' : ''}>
   <div class="flex items-center justify-between">
-    <span class="chip bg-white/5 text-white/60">Round {round.round}</span>
+    <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
     {#if resting.length}
-      <span class="text-[11px] text-white/35">😴 Resting: {resting.map((p) => p.name).join(', ')}</span>
+      <span class="text-[11px] tx-faint">😴 Resting: {resting.map((p) => p.name).join(', ')}</span>
     {/if}
   </div>
 
@@ -33,21 +33,21 @@
       {#each teamA as p}
         <div class="flex items-center gap-1.5"><Avatar player={p} size={26} /><span class="text-sm truncate">{p.name}</span></div>
       {/each}
-      <input class="input text-center text-lg font-bold py-1.5 mt-1" type="number" min="0" inputmode="numeric"
+      <input class="input text-center text-lg font-bold py-1.5 mt-1 {aWon ? 'accent-el' : ''}" type="number" min="0" inputmode="numeric"
              placeholder="0" value={round.scoreA ?? ''} oninput={(e) => set('a', e.target.value)}
-             style={aWon ? 'border-color:#b6ff2e;color:#b6ff2e;' : ''} />
+             style={aWon ? 'border-color:#c6ff32;color:#c6ff32;' : ''} />
     </div>
 
-    <div class="font-display font-bold text-white/30 text-xs">VS</div>
+    <div class="font-display font-bold tx-faint text-xs">VS</div>
 
     <!-- Team B -->
     <div class="flex flex-col gap-1 {bWon ? '' : done ? 'opacity-50' : ''}">
       {#each teamB as p}
         <div class="flex items-center gap-1.5"><Avatar player={p} size={26} /><span class="text-sm truncate">{p.name}</span></div>
       {/each}
-      <input class="input text-center text-lg font-bold py-1.5 mt-1" type="number" min="0" inputmode="numeric"
+      <input class="input text-center text-lg font-bold py-1.5 mt-1 {bWon ? 'accent-el' : ''}" type="number" min="0" inputmode="numeric"
              placeholder="0" value={round.scoreB ?? ''} oninput={(e) => set('b', e.target.value)}
-             style={bWon ? 'border-color:#22e0c8;color:#22e0c8;' : ''} />
+             style={bWon ? 'border-color:#2ff0d6;color:#2ff0d6;' : ''} />
     </div>
   </div>
 </div>

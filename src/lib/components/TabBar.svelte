@@ -12,7 +12,7 @@
 
 <nav class="fixed bottom-0 inset-x-0 z-40 px-3 pt-2"
      style="padding-bottom:max(0.5rem, env(safe-area-inset-bottom));
-            background:linear-gradient(180deg, rgba(8,8,14,0), rgba(8,8,14,0.92) 40%);">
+            background:linear-gradient(180deg, transparent, var(--page-solid) 42%);">
   <div class="max-w-lg mx-auto grid grid-cols-5 gap-1 glass rounded-[22px] p-1.5">
     {#each tabs as t}
       {@const on = active === t.id}
@@ -23,7 +23,7 @@
               onclick={() => (active = t.id)}>
         <span class="text-xl transition-transform duration-200 {on ? 'scale-110 -translate-y-0.5' : ''}"
               style={on ? 'filter:drop-shadow(0 0 10px #c6ff32);' : 'opacity:0.5;'}>{t.icon}</span>
-        <span class="text-[10px] font-bold tracking-wide h-display {on ? 'gradient-text' : 'text-white/40'}">{t.label}</span>
+        <span class="text-[10px] font-bold tracking-wide h-display {on ? 'gradient-text' : 'tx-faint'}">{t.label}</span>
       </button>
     {/each}
   </div>

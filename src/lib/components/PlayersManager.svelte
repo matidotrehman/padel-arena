@@ -28,7 +28,7 @@
 <div class="space-y-3">
   <div class="card space-y-1">
     <h3 class="font-display font-bold neon-text">Roster</h3>
-    <p class="text-sm text-white/55">The core 6 are pre-loaded. Add regulars or guests anytime.</p>
+    <p class="text-sm tx-muted">The core 6 are pre-loaded. Add regulars or guests anytime.</p>
   </div>
 
   <div class="flex gap-2">
@@ -49,10 +49,10 @@
           {:else}
             <div class="flex-1 min-w-0">
               <div class="font-medium truncate">{p.name}</div>
-              <div class="text-xs text-white/40">{p.matchesPlayed} games · {p.wins}W {p.losses}L</div>
+              <div class="text-xs tx-faint">{p.matchesPlayed} games · {p.wins}W {p.losses}L</div>
             </div>
-            <button class="text-white/40 hover:text-white px-2" onclick={() => startEdit(p)} aria-label="Rename">✎</button>
-            <button class="text-white/40 hover:text-hot px-2" onclick={() => (confirmDelete = p)} aria-label="Remove">🗑</button>
+            <button class="tx-muted px-2" onclick={() => startEdit(p)} aria-label="Rename">✎</button>
+            <button class="tx-muted hover:text-hot px-2" onclick={() => (confirmDelete = p)} aria-label="Remove">🗑</button>
           {/if}
         </div>
         <!-- color picker -->
@@ -72,7 +72,7 @@
       <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center">
         <div class="text-3xl">🗑</div>
         <h3 class="font-display font-bold">Remove {confirmDelete.name}?</h3>
-        <p class="text-sm text-white/55">Their lifetime stats will be deleted. Past matches stay in history.</p>
+        <p class="text-sm tx-muted">Their lifetime stats will be deleted. Past matches stay in history.</p>
         <div class="grid grid-cols-2 gap-2">
           <button class="btn btn-ghost" onclick={() => (confirmDelete = null)}>Cancel</button>
           <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);"

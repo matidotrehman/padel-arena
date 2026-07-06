@@ -26,7 +26,7 @@
     {#if medal}
       <span class="text-2xl">{medal}</span>
     {:else}
-      <span class="h-display font-extrabold text-lg text-white/30">{rank}</span>
+      <span class="h-display font-extrabold text-lg tx-faint">{rank}</span>
     {/if}
   </div>
 
@@ -34,23 +34,29 @@
 
   <div class="min-w-0 flex-1 relative z-10">
     <div class="flex items-center gap-2">
-      <span class="h-display font-bold truncate {isTop ? 'text-[17px]' : 'text-[15px]'}">{player.name}</span>
-      <span class="chip py-0.5 px-1.5 text-[13px] leading-none" style="background:rgba(255,255,255,0.06);" title={f.label}>{f.icon}</span>
+      <span class="h-display font-bold truncate tx {isTop ? 'text-[17px]' : 'text-[15px]'}">{player.name}</span>
+      <span class="chip py-0.5 px-1.5 text-[13px] leading-none" style="background:color-mix(in srgb, var(--tx) 8%, transparent);" title={f.label}>{f.icon}</span>
     </div>
-    <div class="text-xs text-white/45 flex items-center gap-2 mt-0.5">
+    <div class="text-xs tx-muted flex items-center gap-2 mt-0.5">
       <span class="mono font-semibold">{player.wins}W · {player.losses}L</span>
-      <span class="text-white/20">|</span>
-      <span class="mono font-semibold" style="color:{diff >= 0 ? '#c6ff32' : '#ff5e3a'};">
+      <span class="tx-faint">|</span>
+      <span class="mono font-semibold {diff >= 0 ? 'neon-text' : 'accent-el'}"
+            style={diff >= 0 ? '' : 'color:#ff5e3a;'}>
         {diff >= 0 ? '+' : ''}{diff}
       </span>
     </div>
   </div>
 
   <div class="text-right shrink-0 relative z-10">
-    <div class="mono font-extrabold leading-none {isTop ? 'text-[30px]' : 'text-[26px]'}"
-         style="color:{isTop ? 'var(--color-neon-green)' : '#f2f2f6'};{isTop ? 'text-shadow:0 0 20px rgba(198,255,50,0.5);' : ''}">
-      {wr}<span class="text-sm align-top">%</span>
-    </div>
-    <div class="text-[9px] uppercase tracking-[0.16em] text-white/35 font-bold h-display">win rate</div>
+    {#if isTop}
+      <div class="mono font-extrabold leading-none text-[30px] neon-text">
+        {wr}<span class="text-sm align-top">%</span>
+      </div>
+    {:else}
+      <div class="mono font-extrabold leading-none text-[26px] tx">
+        {wr}<span class="text-sm align-top">%</span>
+      </div>
+    {/if}
+    <div class="text-[9px] uppercase tracking-[0.16em] tx-faint font-bold h-display">win rate</div>
   </div>
 </div>

@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* ---- Neon Padel-court theme tokens ---- */
+/* ---- Brand palette (theme-independent hues) ---- */
 @theme {
   --color-court-950: #06060a;
   --color-court-900: #0a0a10;
@@ -19,51 +19,106 @@
   --font-display: 'Sora', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
 
-  --shadow-neon: 0 0 0 1px rgba(198, 255, 50, 0.25), 0 0 28px -6px rgba(198, 255, 50, 0.5);
+/* ============================================================
+   THEME TOKENS
+   Light is the default (courtside daylight); .dark flips to neon.
+   ============================================================ */
+:root,
+html.light {
+  --tx: #10131a;
+  --tx-muted: rgba(16, 19, 26, 0.62);
+  --tx-faint: rgba(16, 19, 26, 0.44);
+  --surface-1: rgba(255, 255, 255, 0.9);
+  --surface-2: rgba(255, 255, 255, 0.66);
+  --border: rgba(15, 22, 34, 0.1);
+  --border-hi: rgba(255, 255, 255, 0.7);
+  --input-bg: #ffffff;
+  --accent-fg: #3f7d00; /* readable green for text on light */
+  --grad-a: #4c9600;
+  --grad-b: #00a58c;
+  --shadow-card: 0 12px 30px -20px rgba(20, 30, 55, 0.45);
+  --accent-adjust: saturate(1.45) brightness(0.6); /* darken bright accents on light */
+  --page-solid: #e9edf2;
+  color-scheme: light;
+}
+
+html.dark {
+  --tx: #ececf1;
+  --tx-muted: rgba(236, 236, 241, 0.55);
+  --tx-faint: rgba(236, 236, 241, 0.38);
+  --surface-1: rgba(255, 255, 255, 0.055);
+  --surface-2: rgba(255, 255, 255, 0.014);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hi: rgba(255, 255, 255, 0.06);
+  --input-bg: rgba(20, 20, 29, 0.8);
+  --accent-fg: #c6ff32;
+  --grad-a: #e2ff5c;
+  --grad-b: #2ff0d6;
+  --shadow-card: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  --accent-adjust: none;
+  --page-solid: #08080e;
+  color-scheme: dark;
 }
 
 /* ---- Base ---- */
 html {
   background: var(--color-court-950);
-  color-scheme: dark;
+}
+html.light {
+  background: #eceff3;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
   font-family: var(--font-sans);
-  color: #ececf1;
+  color: var(--tx);
   letter-spacing: -0.01em;
-  background-color: var(--color-court-950);
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
 }
 
-/* Layered ambient background: neon glows + faint court grid + film grain. */
+/* Ambient background — glows + faint court grid, per theme */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -2;
+}
+html.dark body::before {
   background:
     radial-gradient(900px 520px at 50% -8%, rgba(198, 255, 50, 0.13), transparent 60%),
     radial-gradient(760px 520px at 108% 8%, rgba(47, 240, 214, 0.1), transparent 55%),
     radial-gradient(680px 620px at -12% 92%, rgba(160, 107, 255, 0.12), transparent 55%),
     linear-gradient(180deg, #08080e, #06060a 60%);
 }
+html.light body::before {
+  background:
+    radial-gradient(900px 520px at 50% -10%, rgba(120, 200, 0, 0.14), transparent 62%),
+    radial-gradient(760px 520px at 108% 6%, rgba(0, 190, 165, 0.1), transparent 55%),
+    radial-gradient(680px 620px at -12% 94%, rgba(150, 110, 255, 0.1), transparent 58%),
+    linear-gradient(180deg, #eef2f7, #e6ebf1 60%);
+}
 
-/* Subtle "court line" grid texture — uniform + very faint, no mask (cheap to paint). */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  background-size: 46px 46px;
+}
+html.dark body::after {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
-  background-size: 46px 46px;
+}
+html.light body::after {
+  background-image:
+    linear-gradient(rgba(20, 30, 50, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 30, 50, 0.03) 1px, transparent 1px);
 }
 
 *,
@@ -77,27 +132,41 @@ body::after {
 .card,
 .btn-ghost {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.014));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  border: 1px solid var(--border);
   backdrop-filter: blur(10px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  box-shadow: inset 0 1px 0 var(--border-hi), var(--shadow-card);
 }
 
-/* ---- Reusable utility layer ---- */
+/* ---- Utilities ---- */
 @layer components {
+  .tx {
+    color: var(--tx);
+  }
+  .tx-muted {
+    color: var(--tx-muted);
+  }
+  .tx-faint {
+    color: var(--tx-faint);
+  }
+
   .neon-text {
-    color: var(--color-neon-green);
+    color: var(--accent-fg);
+  }
+  html.dark .neon-text {
     text-shadow: 0 0 20px rgba(198, 255, 50, 0.55);
   }
 
   .gradient-text {
-    background: linear-gradient(100deg, var(--color-neon-lime), var(--color-neon-cyan));
+    background: linear-gradient(100deg, var(--grad-a), var(--grad-b));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* Bright accent colors set inline get darkened on the light theme for contrast. */
+  html.light .accent-el {
+    filter: var(--accent-adjust);
   }
 
   .mono {
@@ -115,21 +184,17 @@ body::after {
   .btn-primary {
     background: linear-gradient(160deg, var(--color-neon-lime), var(--color-neon-green) 55%, #9fe000);
     color: #0a0a0b;
-    box-shadow:
-      0 8px 24px -8px rgba(198, 255, 50, 0.7),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 22px -8px rgba(150, 210, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
   .btn-primary:hover {
-    filter: brightness(1.07);
-    box-shadow: 0 10px 30px -8px rgba(198, 255, 50, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    filter: brightness(1.06);
   }
 
   .btn-ghost {
-    @apply text-white/90;
+    color: var(--tx);
   }
   .btn-ghost:hover {
-    border-color: rgba(198, 255, 50, 0.45);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 22px -10px rgba(198, 255, 50, 0.6);
+    border-color: color-mix(in srgb, var(--accent-fg) 45%, transparent);
   }
 
   .chip {
@@ -142,16 +207,23 @@ body::after {
   }
 
   .input {
-    @apply w-full rounded-2xl bg-court-800/80 border border-white/10 px-3 py-2.5 text-white outline-none transition;
+    @apply w-full rounded-2xl px-3 py-2.5 outline-none transition;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--tx);
   }
   .input:focus {
-    border-color: var(--color-neon-green);
-    box-shadow: 0 0 0 3px rgba(198, 255, 50, 0.18);
+    border-color: var(--accent-fg);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-fg) 22%, transparent);
+  }
+  .input::placeholder {
+    color: var(--tx-faint);
   }
 
   .label {
-    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-white/40 mb-1.5 block;
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] mb-1.5 block;
     font-family: var(--font-display);
+    color: var(--tx-faint);
   }
 
   .h-display {
@@ -175,7 +247,8 @@ input[type='range']::-webkit-slider-thumb {
   height: 20px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(198, 255, 50, 0.25), 0 2px 8px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-neon-green) 28%, transparent), 0 2px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 
@@ -189,25 +262,26 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* Thin neon scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(198, 255, 50, 0.25);
+  background: color-mix(in srgb, var(--accent-fg) 30%, transparent);
   border-radius: 8px;
 }
 
-/* Ambient pulse used by the #1 leaderboard slot */
+/* Ambient pulse for the #1 leaderboard slot */
 @keyframes glowPulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
 }
 .animate-glow {
   animation: glowPulse 3.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-glow { animation: none; }
+  .animate-glow {
+    animation: none;
+  }
 }

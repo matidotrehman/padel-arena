@@ -10,7 +10,7 @@
 <div class="space-y-3">
   <div class="card">
     <h3 class="font-display font-bold neon-text">Weekly Honours</h3>
-    <p class="text-sm text-white/55">Auto-awarded from the group's stats. Tap a card to see the rule.</p>
+    <p class="text-sm tx-muted">Auto-awarded from the group's stats. Tap a card to see the rule.</p>
   </div>
   <div class="grid grid-cols-2 gap-3">
     {#each badges as badge, i}

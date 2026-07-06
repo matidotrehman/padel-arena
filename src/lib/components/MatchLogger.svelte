@@ -76,10 +76,10 @@
   <!-- Mode toggle -->
   <div class="glass rounded-xl p-1 grid grid-cols-2 gap-1">
     <button
-      class="btn {mode === 'fixed' ? 'btn-primary' : 'text-white/60'}"
+      class="btn {mode === 'fixed' ? 'btn-primary' : 'tx-muted'}"
       onclick={() => (mode = 'fixed')}>Fixed Partners</button>
     <button
-      class="btn {mode === 'individual' ? 'btn-primary' : 'text-white/60'}"
+      class="btn {mode === 'individual' ? 'btn-primary' : 'tx-muted'}"
       onclick={() => (mode = 'individual')}>Individual</button>
   </div>
 
@@ -96,7 +96,7 @@
             </select>
           {/each}
         </div>
-        <div class="font-display font-bold text-white/40 text-sm">VS</div>
+        <div class="font-display font-bold tx-faint text-sm">VS</div>
         <div class="card space-y-2" style="border-color:rgba(34,224,200,0.25);">
           <div class="label !mb-0" style="color:#22e0c8;">Team B</div>
           {#each [{ get: () => b1, set: (v) => (b1 = v) }, { get: () => b2, set: (v) => (b2 = v) }] as slot}
@@ -113,12 +113,12 @@
         <div class="label">Set scores</div>
         {#each sets as set, i}
           <div class="flex items-center gap-2" in:fly={{ y: 8, duration: 150 }}>
-            <span class="text-xs text-white/40 w-10">Set {i + 1}</span>
+            <span class="text-xs tx-faint w-10">Set {i + 1}</span>
             <input class="input text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
-            <span class="text-white/30">—</span>
+            <span class="tx-faint">—</span>
             <input class="input text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
             {#if sets.length > 1}
-              <button class="text-white/40 hover:text-hot px-2" onclick={() => removeSet(i)} aria-label="Remove set">✕</button>
+              <button class="tx-muted hover:text-hot px-2" onclick={() => removeSet(i)} aria-label="Remove set">✕</button>
             {/if}
           </div>
         {/each}
@@ -132,21 +132,21 @@
     </div>
   {:else}
     <div class="space-y-4" in:fly={{ y: 12, duration: 200 }}>
-      <p class="text-sm text-white/50">
+      <p class="text-sm tx-muted">
         Pick who played, enter each player's points, and tap the trophy for winners — partners don't matter here.
       </p>
       <div class="space-y-2">
         {#each $players as p}
           {@const active = selected[p.id]}
           <div class="glass rounded-xl px-3 py-2.5 flex items-center gap-3 transition"
-               style="border-color:{active ? p.avatarColor + '55' : 'rgba(255,255,255,0.07)'};">
+               style="border-color:{active ? p.avatarColor + '55' : 'var(--border)'};">
             <button class="flex items-center gap-3 flex-1 min-w-0" onclick={() => toggleSelect(p.id)}>
               <span class="w-5 h-5 rounded-md border flex items-center justify-center text-xs shrink-0"
                     style="border-color:{p.avatarColor}88;background:{active ? p.avatarColor : 'transparent'};color:#0a0a0b;">
                 {active ? '✓' : ''}
               </span>
               <Avatar player={p} size={34} />
-              <span class="font-medium truncate {active ? '' : 'text-white/50'}">{p.name}</span>
+              <span class="font-medium truncate {active ? 'tx' : 'tx-faint'}">{p.name}</span>
             </button>
             {#if active}
               <div class="flex items-center gap-2" in:fade={{ duration: 150 }}>

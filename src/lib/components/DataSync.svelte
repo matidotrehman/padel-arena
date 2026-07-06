@@ -50,7 +50,7 @@
 <div class="space-y-3">
   <div class="card space-y-1">
     <h3 class="font-display font-bold neon-text">Data Sync</h3>
-    <p class="text-sm text-white/55">
+    <p class="text-sm tx-muted">
       No server, no accounts. Everything lives on this phone. Export to back up or share the
       group's stats to another device, then Import there to sync.
     </p>
@@ -74,7 +74,7 @@
       <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center">
         <div class="text-3xl">⚠️</div>
         <h3 class="font-display font-bold">Overwrite local data?</h3>
-        <p class="text-sm text-white/55">
+        <p class="text-sm tx-muted">
           This replaces your current stats with the imported file
           ({confirmImport.players.length} players, {confirmImport.matches.length} matches).
         </p>
@@ -92,7 +92,7 @@
       <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center">
         <div class="text-3xl">♻️</div>
         <h3 class="font-display font-bold">Reset everything?</h3>
-        <p class="text-sm text-white/55">Wipes all matches and stats back to the 6 original players. Can't be undone.</p>
+        <p class="text-sm tx-muted">Wipes all matches and stats back to the 6 original players. Can't be undone.</p>
         <div class="grid grid-cols-2 gap-2">
           <button class="btn btn-ghost" onclick={() => (confirmReset = false)}>Cancel</button>
           <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);" onclick={doReset}>Reset</button>

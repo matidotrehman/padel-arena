@@ -71,7 +71,7 @@
   <div class="space-y-4" in:fade>
     <div class="card space-y-1">
       <h3 class="font-display font-bold text-lg neon-text">6-Player Americano</h3>
-      <p class="text-sm text-white/55">
+      <p class="text-sm tx-muted">
         Everyone partners and battles everyone across a balanced rotation. Pick your 6.
       </p>
     </div>
@@ -79,16 +79,16 @@
     <div>
       <div class="label flex justify-between">
         <span>Select players</span>
-        <span style="color:{canStart ? '#b6ff2e' : '#ff5e3a'};">{picked.size}/6</span>
+        <span class="{canStart ? 'neon-text' : 'accent-el'}" style={canStart ? '' : 'color:#ff5e3a;'}>{picked.size}/6</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         {#each $players as p}
           {@const on = picked.has(p.id)}
           <button class="glass rounded-xl px-3 py-2.5 flex items-center gap-2 transition"
-                  style="border-color:{on ? p.avatarColor + '77' : 'rgba(255,255,255,0.07)'};{on ? 'box-shadow:0 0 16px -8px ' + p.avatarColor : ''}"
+                  style="border-color:{on ? p.avatarColor + '77' : 'var(--border)'};{on ? 'box-shadow:0 0 16px -8px ' + p.avatarColor : ''}"
                   onclick={() => toggle(p.id)}>
             <Avatar player={p} size={30} />
-            <span class="text-sm font-medium truncate {on ? '' : 'text-white/45'}">{p.name}</span>
+            <span class="text-sm font-medium truncate {on ? 'tx' : 'tx-faint'}">{p.name}</span>
             {#if on}<span class="ml-auto text-xs" style="color:{p.avatarColor};">✓</span>{/if}
           </button>
         {/each}
@@ -102,7 +102,7 @@
       </div>
       <input type="range" min="60" max="210" step="15" bind:value={minutes}
              class="w-full accent-[color:var(--color-neon-green)]" />
-      <div class="flex justify-between text-[10px] text-white/30"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
+      <div class="flex justify-between text-[10px] tx-faint"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
     </div>
 
     <button class="btn btn-primary w-full text-lg" disabled={!canStart} onclick={start}
@@ -117,11 +117,11 @@
     <div class="card flex items-center justify-between">
       <div>
         <div class="font-display font-bold neon-text">Courtside Scoreboard</div>
-        <div class="text-xs text-white/45">{playedCount} / {totalRounds} rounds scored</div>
+        <div class="text-xs tx-muted">{playedCount} / {totalRounds} rounds scored</div>
       </div>
       <button class="btn btn-ghost text-sm" onclick={() => (showFinalize = true)}>Finish ▸</button>
     </div>
-    <div class="h-1.5 rounded-full bg-white/10 overflow-hidden">
+    <div class="h-1.5 rounded-full overflow-hidden" style="background:color-mix(in srgb, var(--tx) 12%, transparent);">
       <div class="h-full bg-[color:var(--color-neon-green)] transition-all duration-500"
            style="width:{totalRounds ? (playedCount / totalRounds) * 100 : 0}%"></div>
     </div>
@@ -131,11 +131,11 @@
       <div class="label !mb-0">Session Leaderboard</div>
       {#each leaderboard as row, i (row.player.id)}
         <div class="flex items-center gap-2.5" animate:flip={{ duration: 400 }}>
-          <span class="w-5 text-center font-bold {i === 0 ? 'neon-text' : 'text-white/40'}">{i + 1}</span>
+          <span class="w-5 text-center font-bold {i === 0 ? 'neon-text' : 'tx-faint'}">{i + 1}</span>
           <Avatar player={row.player} size={30} />
-          <span class="flex-1 truncate text-sm font-medium">{row.player.name}</span>
-          <span class="text-xs text-white/40">{row.wins}W</span>
-          <span class="font-display font-bold text-lg" style="color:{i === 0 ? '#b6ff2e' : '#e7e7ea'};">{row.points}</span>
+          <span class="flex-1 truncate text-sm font-medium tx">{row.player.name}</span>
+          <span class="text-xs tx-muted">{row.wins}W</span>
+          <span class="font-display font-bold text-lg mono {i === 0 ? 'neon-text' : 'tx'}">{row.points}</span>
         </div>
       {/each}
     </div>
@@ -164,7 +164,7 @@
           <div class="text-center space-y-1">
             <div class="text-4xl">🏆</div>
             <h3 class="font-display font-bold text-lg">Finalize this Americano?</h3>
-            <p class="text-sm text-white/55">
+            <p class="text-sm tx-muted">
               {playedCount} of {totalRounds} rounds have scores. Merge these points into everyone's lifetime stats?
             </p>
           </div>
@@ -182,14 +182,14 @@
             <button class="btn btn-ghost" onclick={() => (showFinalize = false)}>Keep playing</button>
             <button class="btn btn-primary" onclick={doMerge}>Merge stats 🎉</button>
           </div>
-          <button class="text-xs text-white/35 w-full pt-1" onclick={finishAndClose}>
+          <button class="text-xs tx-faint w-full pt-1" onclick={finishAndClose}>
             Discard session without merging
           </button>
         {:else}
           <div class="text-center space-y-2 py-2" in:fade>
             <div class="text-5xl">🎉</div>
             <h3 class="font-display font-bold text-lg neon-text">Merged!</h3>
-            <p class="text-sm text-white/55">Lifetime stats updated. Great session.</p>
+            <p class="text-sm tx-muted">Lifetime stats updated. Great session.</p>
             <button class="btn btn-primary w-full mt-2" onclick={finishAndClose}>Done</button>
           </div>
         {/if}

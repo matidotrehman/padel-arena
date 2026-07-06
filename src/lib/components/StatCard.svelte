@@ -23,13 +23,13 @@
   ></div>
   {#if icon}
     <div class="grid place-items-center w-8 h-8 rounded-xl text-base"
-         style="background:{accent}1a;border:1px solid {accent}33;">{icon}</div>
+         style="background:{accent}1f;border:1px solid {accent}44;">{icon}</div>
   {/if}
   <div>
-    <div class="mono text-[26px] font-extrabold leading-none" style="color:{accent};">
+    <div class="mono text-[26px] font-extrabold leading-none accent-el" style="color:{accent};">
       {shown}{suffix}
     </div>
-    <div class="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45 mt-1.5 h-display">
+    <div class="text-[10px] font-bold uppercase tracking-[0.14em] tx-faint mt-1.5 h-display">
       {label}
     </div>
   </div>

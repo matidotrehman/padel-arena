@@ -9,8 +9,17 @@
   import DataSync from './lib/components/DataSync.svelte';
   import PlayersManager from './lib/components/PlayersManager.svelte';
   import StatCard from './lib/components/StatCard.svelte';
+  import { initialTheme, applyTheme } from './lib/logic/theme.js';
 
   let active = $state('leaderboard');
+  let theme = $state(initialTheme());
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(theme);
+  }
+  // Keep the <html> class in sync (also covers first mount).
+  $effect(() => applyTheme(theme));
 
   const titles = {
     leaderboard: 'Leaderboard',
@@ -27,20 +36,30 @@
 
 <div class="min-h-dvh max-w-lg mx-auto px-4 pt-5 pb-28">
   <!-- Header -->
-  <header class="flex items-center justify-between mb-5">
-    <div>
-      <div class="flex items-center gap-2.5">
-        <span class="grid place-items-center w-9 h-9 rounded-2xl text-lg shrink-0"
-              style="background:linear-gradient(160deg,rgba(198,255,50,0.22),rgba(47,240,214,0.12));border:1px solid rgba(198,255,50,0.3);box-shadow:0 0 20px -6px rgba(198,255,50,0.5);">🎾</span>
-        <h1 class="h-display font-extrabold text-[26px] leading-none">
-          <span class="text-white">PADEL</span><span class="gradient-text">ARENA</span>
+  <header class="flex items-center justify-between gap-2 mb-5">
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-2">
+        <span class="grid place-items-center w-8 h-8 rounded-xl text-base shrink-0"
+              style="background:linear-gradient(160deg,rgba(198,255,50,0.22),rgba(47,240,214,0.12));border:1px solid rgba(198,255,50,0.35);box-shadow:0 0 20px -6px rgba(150,210,0,0.5);">🎾</span>
+        <h1 class="h-display font-extrabold text-[21px] leading-none whitespace-nowrap">
+          <span class="tx">PADEL</span><span class="gradient-text">ARENA</span>
         </h1>
       </div>
-      <p class="text-[11px] text-white/40 tracking-[0.2em] uppercase ml-[46px] mt-1 font-semibold">{titles[active]}</p>
+      <p class="text-[10px] tx-faint tracking-[0.2em] uppercase ml-[40px] mt-1 font-semibold truncate">{titles[active]}</p>
     </div>
-    <div class="text-right glass rounded-2xl px-3 py-1.5">
-      <div class="text-[9px] uppercase tracking-[0.18em] text-white/35 font-bold">👑 Top dog</div>
-      <div class="h-display font-bold text-sm gradient-text">{leader ? leader.name : '—'}</div>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <div class="glass rounded-xl pl-2 pr-2.5 py-1 flex items-center gap-1.5 max-w-[120px]">
+        <span class="text-sm shrink-0">👑</span>
+        <div class="min-w-0">
+          <div class="text-[8px] uppercase tracking-[0.14em] tx-faint font-bold leading-none">Top player</div>
+          <div class="h-display font-bold text-[13px] gradient-text truncate leading-tight">{leader ? leader.name : '—'}</div>
+        </div>
+      </div>
+      <button class="glass rounded-xl w-9 h-9 grid place-items-center text-base shrink-0 active:scale-95 transition"
+              onclick={toggleTheme} aria-label="Toggle light or dark theme"
+              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
     </div>
   </header>
 

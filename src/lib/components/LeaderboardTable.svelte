@@ -9,9 +9,9 @@
 
 <div class="space-y-2.5">
   {#if !hasGames}
-    <div class="card text-center py-8 text-white/50" in:fade>
+    <div class="card text-center py-8 tx-muted" in:fade>
       <div class="text-4xl mb-2">🎾</div>
-      <p class="font-semibold text-white/70">No matches yet</p>
+      <p class="font-semibold tx">No matches yet</p>
       <p class="text-sm">Log a game or run an Americano to light up the board.</p>
     </div>
   {/if}
