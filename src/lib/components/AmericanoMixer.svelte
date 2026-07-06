@@ -53,7 +53,7 @@
   let showFinalize = $state(false);
 
   function doMerge() {
-    mergeAmericano(sessionTotals($session.rounds, $session.playerIds), $session.rounds);
+    mergeAmericano($session.rounds);
     merged = true;
     celebrate();
   }

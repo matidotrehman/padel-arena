@@ -6,6 +6,7 @@
   import MatchLogger from './lib/components/MatchLogger.svelte';
   import AmericanoMixer from './lib/components/AmericanoMixer.svelte';
   import BadgesPanel from './lib/components/BadgesPanel.svelte';
+  import MatchHistory from './lib/components/MatchHistory.svelte';
   import DataSync from './lib/components/DataSync.svelte';
   import PlayersManager from './lib/components/PlayersManager.svelte';
   import StatCard from './lib/components/StatCard.svelte';
@@ -29,6 +30,7 @@
     log: 'Log a Match',
     americano: 'Americano Mixer',
     badges: 'Badges',
+    history: 'Match History',
     manage: 'Manage',
   };
 
@@ -82,6 +84,8 @@
         <AmericanoMixer />
       {:else if active === 'badges'}
         <BadgesPanel />
+      {:else if active === 'history'}
+        <MatchHistory />
       {:else if active === 'manage'}
         <div class="space-y-6">
           <DataSync />

@@ -6,6 +6,7 @@
     { id: 'log', icon: '🎾', label: 'Log' },
     { id: 'americano', icon: '🔀', label: 'Mixer' },
     { id: 'badges', icon: '🎖', label: 'Badges' },
+    { id: 'history', icon: '🕒', label: 'History' },
     { id: 'manage', icon: '⚙️', label: 'Data' },
   ];
 </script>
@@ -13,7 +14,7 @@
 <nav class="fixed bottom-0 inset-x-0 z-40 px-3 pt-2"
      style="padding-bottom:max(0.5rem, env(safe-area-inset-bottom));
             background:linear-gradient(180deg, transparent, var(--page-solid) 42%);">
-  <div class="max-w-lg mx-auto grid grid-cols-5 gap-1 glass rounded-[22px] p-1.5">
+  <div class="max-w-lg mx-auto grid grid-cols-6 gap-0.5 glass rounded-[22px] p-1.5">
     {#each tabs as t}
       {@const on = active === t.id}
       <button class="relative flex flex-col items-center gap-1 py-2 rounded-2xl transition-all duration-200"
