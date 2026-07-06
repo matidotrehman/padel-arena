@@ -2,23 +2,25 @@
 
 /* ---- Neon Padel-court theme tokens ---- */
 @theme {
-  --color-court-950: #070708;
-  --color-court-900: #0a0a0b;
-  --color-court-850: #101013;
-  --color-court-800: #17171c;
-  --color-court-700: #23232b;
-  --color-court-600: #34343f;
-  --color-neon-green: #b6ff2e;
-  --color-neon-lime: #d4ff4d;
+  --color-court-950: #06060a;
+  --color-court-900: #0a0a10;
+  --color-court-850: #0e0e16;
+  --color-court-800: #14141d;
+  --color-court-700: #1e1e2a;
+  --color-court-600: #2b2b3a;
+  --color-neon-green: #c6ff32;
+  --color-neon-lime: #e2ff5c;
   --color-neon-yellow: #f5ff3d;
-  --color-neon-cyan: #22e0c8;
+  --color-neon-cyan: #2ff0d6;
+  --color-neon-violet: #a06bff;
   --color-hot: #ff5e3a;
   --color-ice: #56c8ff;
 
-  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
-  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Sora', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  --shadow-neon: 0 0 0 1px rgba(182, 255, 46, 0.25), 0 0 24px -6px rgba(182, 255, 46, 0.45);
+  --shadow-neon: 0 0 0 1px rgba(198, 255, 50, 0.25), 0 0 28px -6px rgba(198, 255, 50, 0.5);
 }
 
 /* ---- Base ---- */
@@ -31,13 +33,37 @@ body {
   margin: 0;
   min-height: 100dvh;
   font-family: var(--font-sans);
-  color: #e7e7ea;
-  background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(182, 255, 46, 0.08), transparent 60%),
-    radial-gradient(900px 500px at 100% 100%, rgba(34, 224, 200, 0.06), transparent 55%),
-    var(--color-court-950);
+  color: #ececf1;
+  letter-spacing: -0.01em;
+  background-color: var(--color-court-950);
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+}
+
+/* Layered ambient background: neon glows + faint court grid + film grain. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(900px 520px at 50% -8%, rgba(198, 255, 50, 0.13), transparent 60%),
+    radial-gradient(760px 520px at 108% 8%, rgba(47, 240, 214, 0.1), transparent 55%),
+    radial-gradient(680px 620px at -12% 92%, rgba(160, 107, 255, 0.12), transparent 55%),
+    linear-gradient(180deg, #08080e, #06060a 60%);
+}
+
+/* Subtle "court line" grid texture — uniform + very faint, no mask (cheap to paint). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+  background-size: 46px 46px;
 }
 
 *,
@@ -46,65 +72,114 @@ body {
   box-sizing: border-box;
 }
 
-/* ---- Reusable utility layer ---- */
-/* Shared glass surface — plain CSS so it can be reused inside @layer without @apply. */
+/* ---- Shared glass surface (plain CSS so it can be reused without @apply) ---- */
 .glass,
 .card,
 .btn-ghost {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(8px);
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.014));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 30px -18px rgba(0, 0, 0, 0.9);
 }
 
+/* ---- Reusable utility layer ---- */
 @layer components {
-
   .neon-text {
     color: var(--color-neon-green);
-    text-shadow: 0 0 18px rgba(182, 255, 46, 0.55);
+    text-shadow: 0 0 20px rgba(198, 255, 50, 0.55);
+  }
+
+  .gradient-text {
+    background: linear-gradient(100deg, var(--color-neon-lime), var(--color-neon-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.02em;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold tracking-wide transition-all duration-150 active:scale-95 select-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold transition-all duration-150 active:scale-[0.97] select-none;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   .btn-primary {
-    background: linear-gradient(180deg, var(--color-neon-lime), var(--color-neon-green));
+    background: linear-gradient(160deg, var(--color-neon-lime), var(--color-neon-green) 55%, #9fe000);
     color: #0a0a0b;
-    box-shadow: 0 6px 20px -6px rgba(182, 255, 46, 0.6);
+    box-shadow:
+      0 8px 24px -8px rgba(198, 255, 50, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
   .btn-primary:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.07);
+    box-shadow: 0 10px 30px -8px rgba(198, 255, 50, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .btn-ghost {
     @apply text-white/90;
   }
   .btn-ghost:hover {
-    border-color: rgba(182, 255, 46, 0.4);
+    border-color: rgba(198, 255, 50, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 22px -10px rgba(198, 255, 50, 0.6);
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold;
+    font-family: var(--font-display);
   }
 
   .card {
-    @apply rounded-2xl p-4;
+    @apply rounded-3xl p-4;
   }
 
   .input {
-    @apply w-full rounded-xl bg-court-800 border border-white/10 px-3 py-2.5 text-white outline-none transition;
+    @apply w-full rounded-2xl bg-court-800/80 border border-white/10 px-3 py-2.5 text-white outline-none transition;
   }
   .input:focus {
     border-color: var(--color-neon-green);
-    box-shadow: 0 0 0 3px rgba(182, 255, 46, 0.15);
+    box-shadow: 0 0 0 3px rgba(198, 255, 50, 0.18);
   }
 
   .label {
-    @apply text-xs font-semibold uppercase tracking-widest text-white/45 mb-1.5 block;
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-white/40 mb-1.5 block;
+    font-family: var(--font-display);
+  }
+
+  .h-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
   }
 }
 
-/* Number stepper — hide native spinners for a cleaner courtside feel */
+/* Range slider — neon track */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-neon-green), var(--color-neon-cyan));
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(198, 255, 50, 0.25), 0 2px 8px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+/* Number stepper — hide native spinners */
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -120,6 +195,19 @@ input[type='number'] {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(182, 255, 46, 0.25);
+  background: rgba(198, 255, 50, 0.25);
   border-radius: 8px;
+}
+
+/* Ambient pulse used by the #1 leaderboard slot */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.animate-glow {
+  animation: glowPulse 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow { animation: none; }
 }

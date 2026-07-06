@@ -29,17 +29,18 @@
   <!-- Header -->
   <header class="flex items-center justify-between mb-5">
     <div>
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🎾</span>
-        <h1 class="font-display font-extrabold text-2xl tracking-tight">
-          PADEL<span class="neon-text">ARENA</span>
+      <div class="flex items-center gap-2.5">
+        <span class="grid place-items-center w-9 h-9 rounded-2xl text-lg shrink-0"
+              style="background:linear-gradient(160deg,rgba(198,255,50,0.22),rgba(47,240,214,0.12));border:1px solid rgba(198,255,50,0.3);box-shadow:0 0 20px -6px rgba(198,255,50,0.5);">🎾</span>
+        <h1 class="h-display font-extrabold text-[26px] leading-none">
+          <span class="text-white">PADEL</span><span class="gradient-text">ARENA</span>
         </h1>
       </div>
-      <p class="text-xs text-white/40 tracking-widest uppercase ml-9 -mt-1">{titles[active]}</p>
+      <p class="text-[11px] text-white/40 tracking-[0.2em] uppercase ml-[46px] mt-1 font-semibold">{titles[active]}</p>
     </div>
-    <div class="text-right">
-      <div class="text-[10px] uppercase tracking-widest text-white/35">Top dog</div>
-      <div class="font-display font-bold text-sm neon-text">{leader ? leader.name : '—'}</div>
+    <div class="text-right glass rounded-2xl px-3 py-1.5">
+      <div class="text-[9px] uppercase tracking-[0.18em] text-white/35 font-bold">👑 Top dog</div>
+      <div class="h-display font-bold text-sm gradient-text">{leader ? leader.name : '—'}</div>
     </div>
   </header>
 

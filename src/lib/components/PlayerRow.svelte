@@ -8,35 +8,49 @@
   const f = $derived(form(player));
 
   const medal = $derived(rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
+  const isTop = $derived(rank === 1);
 </script>
 
 <div
-  class="glass rounded-2xl px-3 py-3 flex items-center gap-3"
-  style="border-color:{rank === 1 ? 'rgba(182,255,46,0.35)' : 'rgba(255,255,255,0.07)'};
-         {rank === 1 ? 'box-shadow:0 0 24px -10px rgba(182,255,46,0.6);' : ''}"
+  class="glass rounded-3xl px-3 py-3 flex items-center gap-3 relative overflow-hidden"
+  style={isTop
+    ? 'border-color:rgba(198,255,50,0.45);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 34px -12px rgba(198,255,50,0.75);'
+    : ''}
 >
-  <div class="w-7 text-center font-display font-bold text-lg shrink-0">
-    {#if medal}<span class="text-xl">{medal}</span>{:else}<span class="text-white/40">{rank}</span>{/if}
+  {#if isTop}
+    <div class="absolute -left-10 -top-10 w-32 h-32 rounded-full blur-3xl opacity-30 animate-glow"
+         style="background:{player.avatarColor};"></div>
+  {/if}
+
+  <div class="w-8 text-center shrink-0 relative z-10">
+    {#if medal}
+      <span class="text-2xl">{medal}</span>
+    {:else}
+      <span class="h-display font-extrabold text-lg text-white/30">{rank}</span>
+    {/if}
   </div>
 
-  <Avatar {player} size={42} />
+  <div class="relative z-10"><Avatar {player} size={isTop ? 46 : 42} /></div>
 
-  <div class="min-w-0 flex-1">
+  <div class="min-w-0 flex-1 relative z-10">
     <div class="flex items-center gap-2">
-      <span class="font-semibold truncate">{player.name}</span>
-      <span class="text-sm" title={f.label}>{f.icon}</span>
+      <span class="h-display font-bold truncate {isTop ? 'text-[17px]' : 'text-[15px]'}">{player.name}</span>
+      <span class="chip py-0.5 px-1.5 text-[13px] leading-none" style="background:rgba(255,255,255,0.06);" title={f.label}>{f.icon}</span>
     </div>
-    <div class="text-xs text-white/45 flex items-center gap-2">
-      <span>{player.wins}W · {player.losses}L</span>
-      <span class="text-white/25">|</span>
-      <span style="color:{diff >= 0 ? '#b6ff2e' : '#ff5e3a'};">
-        {diff >= 0 ? '+' : ''}{diff} pts
+    <div class="text-xs text-white/45 flex items-center gap-2 mt-0.5">
+      <span class="mono font-semibold">{player.wins}W · {player.losses}L</span>
+      <span class="text-white/20">|</span>
+      <span class="mono font-semibold" style="color:{diff >= 0 ? '#c6ff32' : '#ff5e3a'};">
+        {diff >= 0 ? '+' : ''}{diff}
       </span>
     </div>
   </div>
 
-  <div class="text-right shrink-0">
-    <div class="font-display text-2xl font-bold leading-none neon-text">{wr}<span class="text-sm">%</span></div>
-    <div class="text-[10px] uppercase tracking-widest text-white/35">win rate</div>
+  <div class="text-right shrink-0 relative z-10">
+    <div class="mono font-extrabold leading-none {isTop ? 'text-[30px]' : 'text-[26px]'}"
+         style="color:{isTop ? 'var(--color-neon-green)' : '#f2f2f6'};{isTop ? 'text-shadow:0 0 20px rgba(198,255,50,0.5);' : ''}">
+      {wr}<span class="text-sm align-top">%</span>
+    </div>
+    <div class="text-[9px] uppercase tracking-[0.16em] text-white/35 font-bold h-display">win rate</div>
   </div>
 </div>
