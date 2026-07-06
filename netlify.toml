@@ -7,6 +7,17 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Always revalidate the HTML shell so a new deploy is picked up immediately
+# (hashed /assets/* stay long-cached as usual).
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # SPA fallback so any path serves the app shell.
 # (Netlify routes /.netlify/functions/* to functions before this runs.)
 [[redirects]]
