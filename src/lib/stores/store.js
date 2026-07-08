@@ -9,6 +9,7 @@ import {
 } from '../logic/persistence.js';
 import { rankedPlayers } from '../logic/stats.js';
 import { sessionTotals } from '../logic/americano.js';
+import { mergeStates } from '../logic/merge.js';
 
 // ---- Core writable store, hydrated from LocalStorage ----
 export const store = writable(loadState());
@@ -142,6 +143,7 @@ export function renamePlayer(id, name) {
 export function removePlayer(id) {
   update((s) => {
     s.players = s.players.filter((p) => p.id !== id);
+    s.deletedPlayerIds = [...new Set([...(s.deletedPlayerIds || []), id])]; // tombstone for sync
     return s;
   });
 }
@@ -191,9 +193,34 @@ export function mergeAmericano(rounds) {
 export function deleteMatch(id) {
   update((s) => {
     s.matches = s.matches.filter((m) => m.id !== id);
+    s.deletedMatchIds = [...new Set([...(s.deletedMatchIds || []), id])]; // tombstone for sync
     recompute(s);
     return s;
   });
+}
+
+// ---- Merge a remote (shared) state into local, recompute, adopt ----
+// Used by the sync layer. Preserves the merged lastUpdated (no fresh stamp) so
+// it doesn't look artificially "newest". Returns the merged state, or the
+// current state unchanged when nothing meaningful differs.
+function sig(s) {
+  return [
+    s.lastUpdated,
+    (s.matches || []).length,
+    (s.deletedMatchIds || []).length,
+    (s.deletedPlayerIds || []).length,
+    (s.players || []).map((p) => p.id + p.name + p.avatarColor).join(','),
+  ].join('|');
+}
+
+export function applyMerged(remoteState) {
+  if (!remoteState) return get(store);
+  const cur = get(store);
+  const merged = mergeStates(cur, remoteState);
+  if (!merged || sig(merged) === sig(cur)) return cur;
+  recompute(merged);
+  store.set(merged); // keep merged.lastUpdated; do NOT bump
+  return merged;
 }
 
 // ---- Bulk replace (import) / reset ----

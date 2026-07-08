@@ -43,6 +43,8 @@ export function defaultState() {
     lastUpdated: Date.now(),
     players: SEED_NAMES.map((n, i) => makePlayer(n, i)),
     matches: [],
+    deletedMatchIds: [],
+    deletedPlayerIds: [],
   };
 }
 
@@ -58,6 +60,8 @@ function reconcile(raw) {
     lastUpdated: raw.lastUpdated ?? Date.now(),
     players,
     matches: Array.isArray(raw.matches) ? raw.matches : [],
+    deletedMatchIds: Array.isArray(raw.deletedMatchIds) ? raw.deletedMatchIds : [],
+    deletedPlayerIds: Array.isArray(raw.deletedPlayerIds) ? raw.deletedPlayerIds : [],
   };
 }
 

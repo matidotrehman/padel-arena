@@ -23,7 +23,9 @@ export async function cloudPut(state) {
       headers: { 'content-type': 'application/json', 'x-padel-key': ROOM_KEY },
       body: JSON.stringify({ data: state }),
     });
-    return { ok: r.ok };
+    if (!r.ok) return { ok: false };
+    const j = await r.json().catch(() => ({}));
+    return { ok: true, data: j?.data ?? null }; // server returns the merged state
   } catch {
     return { ok: false };
   }

@@ -1,16 +1,14 @@
-// Keeps the local store and the shared cloud state in sync.
-//
-// Model: last-write-wins by the state's own `lastUpdated` timestamp.
-//  - On start: pull remote; if it's newer, adopt it; otherwise seed remote
-//    from local (first device to load populates the shared copy).
-//  - On any local change: debounced push to the cloud.
-//  - Every few seconds (and on tab focus): pull; adopt if remote is newer.
-//
-// For ~6 friends who rarely log at the exact same second this is plenty; the
-// only lossy case is two people editing within the same poll window.
-import { get } from 'svelte/store';
-import { writable } from 'svelte/store';
-import { store } from '../stores/store.js';
+// Keeps the local store and the shared cloud state in sync via id-level MERGE
+// (not last-write-wins), so concurrent edits from different phones never
+// clobber each other:
+//   - matches/players union by id, deletions tracked with tombstones
+//   - the server merges every write under compare-and-set, so simultaneous
+//     saves both survive
+//   - the client merges remote into local on start, on push response, on poll
+//     and on tab focus
+// Fails soft to LocalStorage when the cloud is unreachable.
+import { get, writable } from 'svelte/store';
+import { store, applyMerged } from '../stores/store.js';
 import { cloudGet, cloudPut } from './cloud.js';
 
 // mode: 'connecting' | 'synced' | 'syncing' | 'local'
@@ -23,17 +21,24 @@ let started = false;
 let applyingRemote = false; // guard so adopting remote doesn't echo a push
 let pushTimer = null;
 
-const localUpdated = () => get(store).lastUpdated || 0;
-
-function adopt(remoteState) {
+// Merge a remote state into local without triggering a re-push.
+function absorb(remoteState) {
   applyingRemote = true;
-  store.set(remoteState); // preserve remote's lastUpdated (don't stamp a new one)
-  applyingRemote = false;
+  try {
+    applyMerged(remoteState);
+  } finally {
+    applyingRemote = false;
+  }
 }
 
 async function pushNow() {
   const res = await cloudPut(get(store));
-  syncStatus.set({ mode: res.ok ? 'synced' : 'local', lastSync: res.ok ? Date.now() : get(syncStatus).lastSync });
+  if (res.ok) {
+    if (res.data) absorb(res.data); // fold in anything the server merged concurrently
+    syncStatus.set({ mode: 'synced', lastSync: Date.now() });
+  } else {
+    syncStatus.set({ mode: 'local', lastSync: get(syncStatus).lastSync });
+  }
 }
 
 function schedulePush() {
@@ -48,9 +53,7 @@ async function poll() {
     syncStatus.update((s) => ({ ...s, mode: 'local' }));
     return;
   }
-  if (res.data && (res.data.lastUpdated || 0) > localUpdated()) {
-    adopt(res.data);
-  }
+  absorb(res.data);
   syncStatus.set({ mode: 'synced', lastSync: Date.now() });
 }
 
@@ -67,14 +70,12 @@ export function startSync() {
     const res = await cloudGet();
     if (!res.ok) {
       syncStatus.set({ mode: 'local', lastSync: null });
-    } else if (res.data && (res.data.lastUpdated || 0) > localUpdated()) {
-      adopt(res.data);
-      syncStatus.set({ mode: 'synced', lastSync: Date.now() });
     } else {
-      await pushNow(); // remote empty or stale → seed it from this device
+      absorb(res.data); // merge remote into local
+      await pushNow(); // push the merged result so the shared copy is complete
     }
 
-    // Push local edits (skip the echo when we're applying a remote update).
+    // Push local edits (skip the echo while we're absorbing a remote update).
     store.subscribe(() => {
       if (!applyingRemote) schedulePush();
     });
