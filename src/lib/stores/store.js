@@ -6,6 +6,7 @@ import {
   makePlayer,
   makeId,
   playerId,
+  migrateState,
   NEON_PALETTE,
 } from '../logic/persistence.js';
 import { rankedPlayers } from '../logic/stats.js';
@@ -220,14 +221,17 @@ function sig(s) {
   ].join('|');
 }
 
+// Returns true if local state changed (so the sync layer can push the result).
 export function applyMerged(remoteState) {
-  if (!remoteState) return get(store);
+  if (!remoteState) return false;
   const cur = get(store);
-  const merged = mergeStates(cur, remoteState);
-  if (!merged || sig(merged) === sig(cur)) return cur;
+  let merged = mergeStates(cur, remoteState);
+  if (!merged) return false;
+  merged = migrateState(merged); // dedupe + tombstone any legacy ids pulled in
+  if (sig(merged) === sig(cur)) return false;
   recompute(merged);
   store.set(merged); // keep merged.lastUpdated; do NOT bump
-  return merged;
+  return true;
 }
 
 // ---- Bulk replace (import) / reset ----

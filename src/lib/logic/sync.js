@@ -21,11 +21,12 @@ let started = false;
 let applyingRemote = false; // guard so adopting remote doesn't echo a push
 let pushTimer = null;
 
-// Merge a remote state into local without triggering a re-push.
+// Merge a remote state into local without echoing a push. Returns whether
+// local actually changed (e.g. new matches, or duplicates cleaned up).
 function absorb(remoteState) {
   applyingRemote = true;
   try {
-    applyMerged(remoteState);
+    return applyMerged(remoteState);
   } finally {
     applyingRemote = false;
   }
@@ -53,8 +54,9 @@ async function poll() {
     syncStatus.update((s) => ({ ...s, mode: 'local' }));
     return;
   }
-  absorb(res.data);
+  const changed = absorb(res.data);
   syncStatus.set({ mode: 'synced', lastSync: Date.now() });
+  if (changed) schedulePush(); // e.g. we merged in new games, or cleaned duplicates
 }
 
 export async function syncNow() {

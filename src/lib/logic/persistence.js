@@ -89,7 +89,11 @@ export function migrateState(s) {
       };
     return m;
   });
-  return { ...s, players, matches, deletedPlayerIds: (s.deletedPlayerIds || []).map(remap) };
+  // Tombstone every legacy id we remapped away, so the shared merge purges the
+  // duplicates on all devices (never tombstone a canonical id).
+  const tombs = new Set(s.deletedPlayerIds || []);
+  for (const oldId of Object.keys(idRemap)) if (idRemap[oldId] !== oldId) tombs.add(oldId);
+  return { ...s, players, matches, deletedPlayerIds: [...tombs] };
 }
 
 // Merge persisted data over a fresh default so new fields are never undefined.
