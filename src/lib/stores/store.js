@@ -5,6 +5,7 @@ import {
   defaultState,
   makePlayer,
   makeId,
+  playerId,
   NEON_PALETTE,
 } from '../logic/persistence.js';
 import { rankedPlayers } from '../logic/stats.js';
@@ -12,7 +13,11 @@ import { sessionTotals } from '../logic/americano.js';
 import { mergeStates } from '../logic/merge.js';
 
 // ---- Core writable store, hydrated from LocalStorage ----
-export const store = writable(loadState());
+// Recompute once on load: migration may have deduped players, so their stats
+// must be rebuilt from the (remapped) matches.
+const initialState = loadState();
+recompute(initialState);
+export const store = writable(initialState);
 
 // Persist on every change (the "database" write).
 store.subscribe((state) => saveState(state));
@@ -125,7 +130,9 @@ export function addPlayer(name) {
   const clean = name.trim();
   if (!clean) return;
   update((s) => {
-    s.players.push(makePlayer(clean, s.players.length));
+    const id = playerId(clean);
+    s.deletedPlayerIds = (s.deletedPlayerIds || []).filter((x) => x !== id); // un-tombstone on re-add
+    if (!s.players.some((p) => p.id === id)) s.players.push(makePlayer(clean, s.players.length));
     return s;
   });
 }

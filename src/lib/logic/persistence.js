@@ -22,9 +22,21 @@ export function makeId(prefix = 'id') {
   return `${prefix}_${Date.now().toString(36)}_${idCounter}`;
 }
 
+// Player identity is derived from the name so it is the SAME on every device.
+// This lets the shared-sync merge dedupe players (otherwise each phone would
+// mint its own random id for "Ahmed" and the union would show duplicates).
+export function playerId(name) {
+  const slug = String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `p_${slug || 'x'}`;
+}
+
 export function makePlayer(name, colorIndex = 0) {
   return {
-    id: makeId('p'),
+    id: playerId(name),
     name,
     avatarColor: NEON_PALETTE[colorIndex % NEON_PALETTE.length],
     matchesPlayed: 0,
@@ -48,6 +60,38 @@ export function defaultState() {
   };
 }
 
+// Remap players to deterministic name-based ids, dedupe by that id, and rewrite
+// every match's player references. Heals data created before name-based ids
+// (e.g. duplicate seed players from different devices).
+export function migrateState(s) {
+  const idRemap = {};
+  const byId = new Map();
+  for (const p of s.players || []) {
+    const cid = playerId(p.name);
+    idRemap[p.id] = cid;
+    if (!byId.has(cid)) byId.set(cid, { ...p, id: cid }); // keep first occurrence
+  }
+  const players = [...byId.values()];
+  const remap = (id) => idRemap[id] || id;
+  const matches = (s.matches || []).map((m) => {
+    if (m.mode === 'fixed') return { ...m, teamA: (m.teamA || []).map(remap), teamB: (m.teamB || []).map(remap) };
+    if (m.mode === 'individual')
+      return { ...m, entries: (m.entries || []).map((e) => ({ ...e, id: remap(e.id) })), winnerIds: (m.winnerIds || []).map(remap) };
+    if (m.mode === 'americano')
+      return {
+        ...m,
+        rounds: (m.rounds || []).map((r) => ({
+          ...r,
+          teamA: (r.teamA || []).map(remap),
+          teamB: (r.teamB || []).map(remap),
+          resting: (r.resting || []).map(remap),
+        })),
+      };
+    return m;
+  });
+  return { ...s, players, matches, deletedPlayerIds: (s.deletedPlayerIds || []).map(remap) };
+}
+
 // Merge persisted data over a fresh default so new fields are never undefined.
 function reconcile(raw) {
   const base = defaultState();
@@ -55,14 +99,14 @@ function reconcile(raw) {
   const players = Array.isArray(raw.players)
     ? raw.players.map((p, i) => ({ ...makePlayer(p.name ?? `Player ${i + 1}`, i), ...p }))
     : base.players;
-  return {
+  return migrateState({
     version: SCHEMA_VERSION,
     lastUpdated: raw.lastUpdated ?? Date.now(),
     players,
     matches: Array.isArray(raw.matches) ? raw.matches : [],
     deletedMatchIds: Array.isArray(raw.deletedMatchIds) ? raw.deletedMatchIds : [],
     deletedPlayerIds: Array.isArray(raw.deletedPlayerIds) ? raw.deletedPlayerIds : [],
-  };
+  });
 }
 
 export function loadState() {
