@@ -1,10 +1,11 @@
 <script>
   import Avatar from './Avatar.svelte';
-  import { winRate, pointDiff, form } from '../logic/stats.js';
+  import { winRate, pointDiff, avgPoints, form } from '../logic/stats.js';
 
   let { player, rank } = $props();
   const wr = $derived(winRate(player));
   const diff = $derived(pointDiff(player));
+  const avg = $derived(avgPoints(player));
   const f = $derived(form(player));
 
   const medal = $derived(rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
@@ -37,9 +38,11 @@
       <span class="h-display font-bold truncate tx {isTop ? 'text-[17px]' : 'text-[15px]'}">{player.name}</span>
       <span class="chip py-0.5 px-1.5 text-[13px] leading-none" style="background:color-mix(in srgb, var(--tx) 8%, transparent);" title={f.label}>{f.icon}</span>
     </div>
-    <div class="text-xs tx-muted flex items-center gap-2 mt-0.5">
+    <div class="text-xs tx-muted flex items-center gap-1.5 mt-0.5">
       <span class="mono font-semibold">{player.wins}W · {player.losses}L</span>
-      <span class="tx-faint">|</span>
+      <span class="tx-faint">·</span>
+      <span class="mono font-semibold">{wr}%</span>
+      <span class="tx-faint">·</span>
       <span class="mono font-semibold {diff >= 0 ? 'neon-text' : 'accent-el'}"
             style={diff >= 0 ? '' : 'color:#ff5e3a;'}>
         {diff >= 0 ? '+' : ''}{diff}
@@ -48,15 +51,9 @@
   </div>
 
   <div class="text-right shrink-0 relative z-10">
-    {#if isTop}
-      <div class="mono font-extrabold leading-none text-[30px] neon-text">
-        {wr}<span class="text-sm align-top">%</span>
-      </div>
-    {:else}
-      <div class="mono font-extrabold leading-none text-[26px] tx">
-        {wr}<span class="text-sm align-top">%</span>
-      </div>
-    {/if}
-    <div class="text-[9px] uppercase tracking-[0.16em] tx-faint font-bold h-display">win rate</div>
+    <div class="mono font-extrabold leading-none {isTop ? 'text-[30px] neon-text' : 'text-[26px] tx'}">
+      {avg}
+    </div>
+    <div class="text-[9px] uppercase tracking-[0.16em] tx-faint font-bold h-display">pts / game</div>
   </div>
 </div>

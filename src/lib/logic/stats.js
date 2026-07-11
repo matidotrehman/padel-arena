@@ -36,14 +36,22 @@ export function avgConceded(p) {
   return +(p.pointsConceded / p.matchesPlayed).toFixed(1);
 }
 
-// Leaderboard order: win rate desc, then point diff, then wins, then fewer games.
+// Average points scored per game — the Americano ranking metric.
+export function avgPoints(p) {
+  if (!p.matchesPlayed) return 0;
+  return +(p.pointsWon / p.matchesPlayed).toFixed(1);
+}
+
+// Leaderboard order: avg points/game desc, then win rate, then point diff, then
+// fewer games. Players with no games sort last.
 export function rankedPlayers(players) {
   return [...players].sort((a, b) => {
+    const ap = avgPoints(b) - avgPoints(a);
+    if (ap) return ap;
     const wr = winRate(b) - winRate(a);
     if (wr) return wr;
     const pd = pointDiff(b) - pointDiff(a);
     if (pd) return pd;
-    if (b.wins !== a.wins) return b.wins - a.wins;
     return a.matchesPlayed - b.matchesPlayed;
   });
 }

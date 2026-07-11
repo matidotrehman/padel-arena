@@ -19,6 +19,19 @@ function pairingsOf([a, b, c, d]) {
   ];
 }
 
+// Canonical key for a whole 2v2 matchup (side-independent) — used to avoid
+// replaying the exact same game.
+function matchupKey(teamA, teamB) {
+  return [[...teamA].sort().join('+'), [...teamB].sort().join('+')].sort().join(' vs ');
+}
+
+// All 15 ways to pick the 2 resters from 6 players.
+function restPairsOf(ids) {
+  const out = [];
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) out.push([ids[i], ids[j]]);
+  return out;
+}
+
 // Suggested number of rounds for a time slot. ~11 min per game.
 export function suggestedRounds(minutes = 150) {
   return Math.max(4, Math.round(minutes / 11));
@@ -29,7 +42,7 @@ export function suggestedRounds(minutes = 150) {
  * @param {number} rounds - number of games (each game rests 2 players)
  * @returns {{ rounds: Array, fairness: object }}
  */
-export function generateSchedule(playerIds, rounds = 14) {
+export function generateSchedule(playerIds, rounds = 12) {
   const ids = [...playerIds];
   if (ids.length !== 6) {
     throw new Error('The Americano mixer is tuned for exactly 6 players.');
@@ -37,48 +50,59 @@ export function generateSchedule(playerIds, rounds = 14) {
 
   const partnerCount = {}; // "a|b" -> times partnered
   const opponentCount = {}; // "a|b" -> times opposed
+  const matchupCount = {}; // whole-game key -> times this exact 2v2 has happened
   const restCount = Object.fromEntries(ids.map((id) => [id, 0]));
   const playCount = Object.fromEntries(ids.map((id) => [id, 0]));
 
   const inc = (map, k) => (map[k] = (map[k] || 0) + 1);
   const get = (map, k) => map[k] || 0;
+  const restPairs = restPairsOf(ids);
 
   const schedule = [];
 
   for (let r = 0; r < rounds; r++) {
-    // 1) Pick the 2 resters: those who have rested least (then played most),
-    //    deterministic final tie-break on id order.
-    const restOrder = [...ids].sort((x, y) => {
-      if (restCount[x] !== restCount[y]) return restCount[x] - restCount[y];
-      if (playCount[y] !== playCount[x]) return playCount[y] - playCount[x];
-      return ids.indexOf(x) - ids.indexOf(y);
-    });
-    const resters = restOrder.slice(0, 2);
-    const active = ids.filter((id) => !resters.includes(id));
-
-    // 2) Among the 4 active, choose the pairing that minimizes partner repeats,
-    //    then opponent repeats.
+    // Jointly consider every (resters × pairing) combo — 15 rest pairs × 3
+    // pairings = 45 candidates — and pick the best mix. Weighted so that:
+    //   rest stays balanced  >>  partners spread out  >>  no exact-game replays
+    //   >>  opponents spread out.
     let best = null;
-    for (const [teamA, teamB] of pairingsOf(active)) {
-      const partnerRepeat = get(partnerCount, pairKey(...teamA)) + get(partnerCount, pairKey(...teamB));
-      let oppRepeat = 0;
-      for (const a of teamA) for (const b of teamB) oppRepeat += get(opponentCount, pairKey(a, b));
-      const score = partnerRepeat * 100 + oppRepeat; // partner balance dominates
-      if (!best || score < best.score) best = { teamA, teamB, score };
+    let bestScore = Infinity;
+    for (const resters of restPairs) {
+      const active = ids.filter((id) => !resters.includes(id));
+      const restAfter = { ...restCount };
+      restAfter[resters[0]]++;
+      restAfter[resters[1]]++;
+      const rv = Object.values(restAfter);
+      const restSpread = Math.max(...rv) - Math.min(...rv);
+
+      for (const [teamA, teamB] of pairingsOf(active)) {
+        const partnerRepeat = get(partnerCount, pairKey(...teamA)) + get(partnerCount, pairKey(...teamB));
+        let oppRepeat = 0;
+        for (const a of teamA) for (const b of teamB) oppRepeat += get(opponentCount, pairKey(a, b));
+        const mk = matchupKey(teamA, teamB);
+        const matchupRepeat = get(matchupCount, mk);
+
+        const score = restSpread * 1000 + partnerRepeat * 100 + matchupRepeat * 20 + oppRepeat;
+        if (score < bestScore) {
+          bestScore = score;
+          best = { resters, teamA, teamB, mk };
+        }
+      }
     }
 
-    // 3) Commit round.
+    // Commit round.
     inc(partnerCount, pairKey(...best.teamA));
     inc(partnerCount, pairKey(...best.teamB));
     for (const a of best.teamA) for (const b of best.teamB) inc(opponentCount, pairKey(a, b));
-    for (const id of active) playCount[id]++;
-    for (const id of resters) restCount[id]++;
+    inc(matchupCount, best.mk);
+    for (const id of best.resters) restCount[id]++;
+    for (const id of ids.filter((x) => !best.resters.includes(x))) playCount[id]++;
 
     schedule.push({
       round: r + 1,
       teamA: best.teamA,
       teamB: best.teamB,
-      resting: resters,
+      resting: best.resters,
       scoreA: null,
       scoreB: null,
     });
@@ -86,7 +110,7 @@ export function generateSchedule(playerIds, rounds = 14) {
 
   return {
     rounds: schedule,
-    fairness: { partnerCount, opponentCount, restCount, playCount },
+    fairness: { partnerCount, opponentCount, matchupCount, restCount, playCount },
   };
 }
 
