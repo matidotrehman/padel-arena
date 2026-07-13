@@ -2,11 +2,12 @@
   import Avatar from './Avatar.svelte';
   import { winRate, pointDiff, avgPoints, form } from '../logic/stats.js';
 
-  let { player, rank } = $props();
+  let { player, rank, mode = 'points' } = $props();
   const wr = $derived(winRate(player));
   const diff = $derived(pointDiff(player));
   const avg = $derived(avgPoints(player));
   const f = $derived(form(player));
+  const byWinrate = $derived(mode === 'winrate');
 
   const medal = $derived(rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
   const isTop = $derived(rank === 1);
@@ -41,7 +42,7 @@
     <div class="text-xs tx-muted flex items-center gap-1.5 mt-0.5">
       <span class="mono font-semibold">{player.wins}W · {player.losses}L</span>
       <span class="tx-faint">·</span>
-      <span class="mono font-semibold">{wr}%</span>
+      <span class="mono font-semibold">{byWinrate ? `${avg} pg` : `${wr}%`}</span>
       <span class="tx-faint">·</span>
       <span class="mono font-semibold {diff >= 0 ? 'neon-text' : 'accent-el'}"
             style={diff >= 0 ? '' : 'color:#ff5e3a;'}>
@@ -52,8 +53,10 @@
 
   <div class="text-right shrink-0 relative z-10">
     <div class="mono font-extrabold leading-none {isTop ? 'text-[30px] neon-text' : 'text-[26px] tx'}">
-      {avg}
+      {byWinrate ? wr : avg}{#if byWinrate}<span class="text-sm align-top">%</span>{/if}
     </div>
-    <div class="text-[9px] uppercase tracking-[0.16em] tx-faint font-bold h-display">pts / game</div>
+    <div class="text-[9px] uppercase tracking-[0.16em] tx-faint font-bold h-display">
+      {byWinrate ? 'win rate' : 'pts / game'}
+    </div>
   </div>
 </div>

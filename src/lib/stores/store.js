@@ -12,6 +12,7 @@ import {
 import { rankedPlayers } from '../logic/stats.js';
 import { sessionTotals } from '../logic/americano.js';
 import { mergeStates } from '../logic/merge.js';
+import { rankMode } from './prefs.js';
 
 // ---- Core writable store, hydrated from LocalStorage ----
 // Recompute once on load: migration may have deduped players, so their stats
@@ -25,7 +26,7 @@ store.subscribe((state) => saveState(state));
 
 // ---- Derived views ----
 export const players = derived(store, ($s) => $s.players);
-export const ranked = derived(store, ($s) => rankedPlayers($s.players));
+export const ranked = derived([store, rankMode], ([$s, $m]) => rankedPlayers($s.players, $m));
 export const matches = derived(store, ($s) => $s.matches);
 
 // ---- Helpers ----

@@ -42,16 +42,15 @@ export function avgPoints(p) {
   return +(p.pointsWon / p.matchesPlayed).toFixed(1);
 }
 
-// Leaderboard order: avg points/game desc, then win rate, then point diff, then
-// fewer games. Players with no games sort last.
-export function rankedPlayers(players) {
+// Leaderboard order. mode 'points' → avg points/game first; mode 'winrate' →
+// win % first. Remaining keys break ties. Players with no games sort last.
+export function rankedPlayers(players, mode = 'points') {
+  const keys = mode === 'winrate' ? [winRate, pointDiff, avgPoints] : [avgPoints, winRate, pointDiff];
   return [...players].sort((a, b) => {
-    const ap = avgPoints(b) - avgPoints(a);
-    if (ap) return ap;
-    const wr = winRate(b) - winRate(a);
-    if (wr) return wr;
-    const pd = pointDiff(b) - pointDiff(a);
-    if (pd) return pd;
+    for (const k of keys) {
+      const d = k(b) - k(a);
+      if (d) return d;
+    }
     return a.matchesPlayed - b.matchesPlayed;
   });
 }
