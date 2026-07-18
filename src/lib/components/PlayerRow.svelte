@@ -2,7 +2,7 @@
   import Avatar from './Avatar.svelte';
   import { winRate, pointDiff, avgPoints, form } from '../logic/stats.js';
 
-  let { player, rank, mode = 'points' } = $props();
+  let { player, rank, mode = 'points', onselect } = $props();
   const wr = $derived(winRate(player));
   const diff = $derived(pointDiff(player));
   const avg = $derived(avgPoints(player));
@@ -13,8 +13,10 @@
   const isTop = $derived(rank === 1);
 </script>
 
-<div
-  class="glass rounded-3xl px-3 py-3 flex items-center gap-3 relative overflow-hidden"
+<button
+  type="button"
+  onclick={() => onselect?.(player)}
+  class="glass rounded-3xl px-3 py-3 flex items-center gap-3 relative overflow-hidden w-full text-left transition active:scale-[0.99]"
   style={isTop
     ? 'border-color:rgba(198,255,50,0.45);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 34px -12px rgba(198,255,50,0.75);'
     : ''}
@@ -59,4 +61,4 @@
       {byWinrate ? 'win rate' : 'pts / game'}
     </div>
   </div>
-</div>
+</button>
