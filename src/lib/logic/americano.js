@@ -1,12 +1,10 @@
-// 6-player Americano schedule generator (single court).
+// Americano schedule generator (single court, ANY number of players ≥ 4).
 //
-// Reality check: with 6 players and whole 2v2 games, it's mathematically
-// impossible for everyone to partner everyone *exactly* once (that needs 7.5
-// games). So the goal is a *balanced* rotation: partner counts as even as
-// possible, opponent counts spread out, and rest turns shared equally.
-//
-// The generator is greedy + fully deterministic (fixed tie-breaks), so the
-// same 6 players always produce the same fair schedule.
+// Each round exactly 4 players play a 2v2 game and the rest sit out. The
+// generator jointly picks WHO plays and HOW they pair up, optimising (in
+// priority order) for balanced rest, even partner spread, and — crucially — it
+// never replays an identical game until it's mathematically forced. Fully
+// deterministic: the same players always get the same fair schedule.
 
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -25,11 +23,22 @@ function matchupKey(teamA, teamB) {
   return [[...teamA].sort().join('+'), [...teamB].sort().join('+')].sort().join(' vs ');
 }
 
-// All 15 ways to pick the 2 resters from 6 players.
-function restPairsOf(ids) {
-  const out = [];
-  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) out.push([ids[i], ids[j]]);
-  return out;
+// All ways to choose k items from arr (order-independent).
+function combinations(arr, k) {
+  const res = [];
+  const rec = (start, combo) => {
+    if (combo.length === k) {
+      res.push(combo.slice());
+      return;
+    }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i]);
+      rec(i + 1, combo);
+      combo.pop();
+    }
+  };
+  rec(0, []);
+  return res;
 }
 
 // Suggested number of rounds for a time slot. ~11 min per game.
@@ -38,14 +47,14 @@ export function suggestedRounds(minutes = 150) {
 }
 
 /**
- * @param {string[]} playerIds - exactly 6 player ids
- * @param {number} rounds - number of games (each game rests 2 players)
+ * @param {string[]} playerIds - 4 or more player ids
+ * @param {number} rounds - number of games (each game rests the extra players)
  * @returns {{ rounds: Array, fairness: object }}
  */
 export function generateSchedule(playerIds, rounds = 12) {
   const ids = [...playerIds];
-  if (ids.length !== 6) {
-    throw new Error('The Americano mixer is tuned for exactly 6 players.');
+  if (ids.length < 4) {
+    throw new Error('Pick at least 4 players for an Americano.');
   }
 
   const partnerCount = {}; // "a|b" -> times partnered
@@ -56,22 +65,22 @@ export function generateSchedule(playerIds, rounds = 12) {
 
   const inc = (map, k) => (map[k] = (map[k] || 0) + 1);
   const get = (map, k) => map[k] || 0;
-  const restPairs = restPairsOf(ids);
+  // Every way to choose the 4 players who play this round; the rest sit out.
+  const activeCombos = combinations(ids, 4);
 
   const schedule = [];
 
   for (let r = 0; r < rounds; r++) {
-    // Jointly consider every (resters × pairing) combo — 15 rest pairs × 3
-    // pairings = 45 candidates — and pick the best mix. Weighted so that:
+    // Jointly consider every (who-plays × pairing) candidate and pick the best
+    // mix, weighted so that:
     //   rest stays balanced  >>  partners spread out  >>  no exact-game replays
     //   >>  opponents spread out.
     let best = null;
     let bestScore = Infinity;
-    for (const resters of restPairs) {
-      const active = ids.filter((id) => !resters.includes(id));
+    for (const active of activeCombos) {
+      const resters = ids.filter((id) => !active.includes(id));
       const restAfter = { ...restCount };
-      restAfter[resters[0]]++;
-      restAfter[resters[1]]++;
+      for (const id of resters) restAfter[id]++;
       const rv = Object.values(restAfter);
       const restSpread = Math.max(...rv) - Math.min(...rv);
 

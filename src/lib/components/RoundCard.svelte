@@ -1,7 +1,7 @@
 <script>
   import Avatar from './Avatar.svelte';
 
-  let { round, index, playersById, onscore } = $props();
+  let { round, index, playersById, onscore, isNext = false } = $props();
 
   const teamA = $derived(round.teamA.map((id) => playersById[id]).filter(Boolean));
   const teamB = $derived(round.teamB.map((id) => playersById[id]).filter(Boolean));
@@ -19,11 +19,17 @@
   }
 </script>
 
-<div class="glass rounded-2xl p-3 space-y-2.5" style={done ? 'border-color:rgba(182,255,46,0.25);' : ''}>
-  <div class="flex items-center justify-between">
-    <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
+<div class="glass rounded-2xl p-3 space-y-2.5"
+     style={isNext
+       ? 'border-color:rgba(198,255,50,0.5);box-shadow:0 0 22px -10px rgba(198,255,50,0.7);'
+       : done ? 'border-color:rgba(182,255,46,0.25);' : ''}>
+  <div class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-1.5">
+      <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
+      {#if isNext}<span class="chip neon-text" style="background:color-mix(in srgb, var(--color-neon-green) 16%, transparent);">▶ Up next</span>{/if}
+    </div>
     {#if resting.length}
-      <span class="text-[11px] tx-faint">😴 Resting: {resting.map((p) => p.name).join(', ')}</span>
+      <span class="text-[11px] tx-faint truncate">😴 {resting.map((p) => p.name).join(', ')}</span>
     {/if}
   </div>
 

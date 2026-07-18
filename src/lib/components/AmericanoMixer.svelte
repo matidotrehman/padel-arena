@@ -12,19 +12,20 @@
   let picked = $state(new Set());
   let minutes = $state(150);
   const rounds = $derived(suggestedRounds(minutes));
-  const canStart = $derived(picked.size === 6);
+  const canStart = $derived(picked.size >= 4);
+  const restPerRound = $derived(Math.max(0, picked.size - 4)); // single court: 4 play, rest sit
 
-  // Pre-select first 6 players.
+  // Pre-select everyone currently in the roster (they can deselect who's absent).
   $effect(() => {
     if (picked.size === 0 && !$session && $players.length) {
-      picked = new Set($players.slice(0, 6).map((p) => p.id));
+      picked = new Set($players.map((p) => p.id));
     }
   });
 
   function toggle(id) {
     const next = new Set(picked);
     next.has(id) ? next.delete(id) : next.add(id);
-    if (next.size <= 6) picked = next;
+    picked = next;
   }
 
   function start() {
@@ -48,6 +49,10 @@
     $session ? $session.rounds.filter((r) => r.scoreA != null && r.scoreB != null).length : 0
   );
   const totalRounds = $derived($session ? $session.rounds.length : 0);
+  // First not-yet-scored round → "Up next" on the courtside sheet.
+  const nextIndex = $derived(
+    $session ? $session.rounds.findIndex((r) => r.scoreA == null || r.scoreB == null) : -1
+  );
 
   let merged = $state(false);
   let showFinalize = $state(false);
@@ -70,16 +75,19 @@
   <!-- ===== SETUP ===== -->
   <div class="space-y-4" in:fade>
     <div class="card space-y-1">
-      <h3 class="font-display font-bold text-lg neon-text">6-Player Americano</h3>
+      <h3 class="font-display font-bold text-lg neon-text">Americano Mixer</h3>
       <p class="text-sm tx-muted">
-        Everyone partners and battles everyone across a balanced rotation. Pick your 6.
+        Everyone partners and battles everyone across a balanced rotation — no game ever
+        repeats. Pick who's playing (4 or more).
       </p>
     </div>
 
     <div>
       <div class="label flex justify-between">
-        <span>Select players</span>
-        <span class="{canStart ? 'neon-text' : 'accent-el'}" style={canStart ? '' : 'color:#ff5e3a;'}>{picked.size}/6</span>
+        <span>Who's playing?</span>
+        <span class="{canStart ? 'neon-text' : 'accent-el'}" style={canStart ? '' : 'color:#ff5e3a;'}>
+          {picked.size} selected{canStart ? '' : ' · need 4+'}
+        </span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         {#each $players as p}
@@ -93,6 +101,11 @@
           </button>
         {/each}
       </div>
+      {#if canStart}
+        <p class="text-[11px] tx-faint mt-2 text-center">
+          4 on court each round{restPerRound > 0 ? ` · ${restPerRound} rest and rotate` : ' · nobody sits out'}
+        </p>
+      {/if}
     </div>
 
     <div class="card space-y-2">
@@ -143,7 +156,7 @@
     <!-- Rounds -->
     <div class="space-y-2.5">
       {#each $session.rounds as round, i (round.round)}
-        <RoundCard {round} index={i} {playersById} onscore={updateRoundScore} />
+        <RoundCard {round} index={i} {playersById} onscore={updateRoundScore} isNext={i === nextIndex} />
       {/each}
     </div>
 
