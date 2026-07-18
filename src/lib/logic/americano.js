@@ -3,10 +3,22 @@
 // Each round exactly 4 players play a 2v2 game and the rest sit out. The
 // generator jointly picks WHO plays and HOW they pair up, optimising (in
 // priority order) for balanced rest, even partner spread, and — crucially — it
-// never replays an identical game until it's mathematically forced. Fully
-// deterministic: the same players always get the same fair schedule.
+// never replays an identical game until it's mathematically forced.
+//
+// It's RANDOMISED: the player order is shuffled and, each round, it picks at
+// random among the equally-best options — so every mix is a fresh schedule
+// while keeping the exact same fairness/no-duplicate guarantees.
 
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+// Fisher–Yates shuffle (in place). Browser Math.random — plenty for a mixer.
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // All ways to split 4 players into two pairs (3 distinct pairings).
 function pairingsOf([a, b, c, d]) {
@@ -47,15 +59,41 @@ export function suggestedRounds(minutes = 150) {
 }
 
 /**
+ * Public entry point. Runs several randomised attempts and returns the best
+ * one — so the schedule is different every time, yet never has an avoidable
+ * duplicate game.
+ *
  * @param {string[]} playerIds - 4 or more player ids
  * @param {number} rounds - number of games (each game rests the extra players)
  * @returns {{ rounds: Array, fairness: object }}
  */
 export function generateSchedule(playerIds, rounds = 12) {
-  const ids = [...playerIds];
-  if (ids.length < 4) {
+  if (playerIds.length < 4) {
     throw new Error('Pick at least 4 players for an Americano.');
   }
+  const ATTEMPTS = 60;
+  let best = null;
+  let bestCost = Infinity;
+  for (let t = 0; t < ATTEMPTS; t++) {
+    const cand = buildSchedule(playerIds, rounds);
+    const identicalGames = cand.rounds.length - Object.keys(cand.fairness.matchupCount).length;
+    const pc = Object.values(cand.fairness.partnerCount);
+    const partnerMax = pc.length ? Math.max(...pc) : 0;
+    const rv = Object.values(cand.fairness.restCount);
+    const restSpread = Math.max(...rv) - Math.min(...rv);
+    const cost = identicalGames * 10000 + partnerMax * 100 + restSpread;
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = cand;
+      if (identicalGames === 0 && restSpread <= 1) break; // can't do better
+    }
+  }
+  return best;
+}
+
+// One randomised attempt at a schedule.
+function buildSchedule(playerIds, rounds) {
+  const ids = shuffle([...playerIds]); // randomise so every mix differs
 
   const partnerCount = {}; // "a|b" -> times partnered
   const opponentCount = {}; // "a|b" -> times opposed
@@ -75,8 +113,10 @@ export function generateSchedule(playerIds, rounds = 12) {
     // mix, weighted so that:
     //   rest stays balanced  >>  partners spread out  >>  no exact-game replays
     //   >>  opponents spread out.
-    let best = null;
+    // Collect ALL equally-best candidates, then pick one at random — keeps the
+    // schedule optimal but different every time.
     let bestScore = Infinity;
+    let bestChoices = [];
     for (const active of activeCombos) {
       const resters = ids.filter((id) => !active.includes(id));
       const restAfter = { ...restCount };
@@ -94,10 +134,13 @@ export function generateSchedule(playerIds, rounds = 12) {
         const score = restSpread * 1000 + partnerRepeat * 100 + matchupRepeat * 20 + oppRepeat;
         if (score < bestScore) {
           bestScore = score;
-          best = { resters, teamA, teamB, mk };
+          bestChoices = [{ resters, teamA, teamB, mk }];
+        } else if (score === bestScore) {
+          bestChoices.push({ resters, teamA, teamB, mk });
         }
       }
     }
+    const best = bestChoices[Math.floor(Math.random() * bestChoices.length)];
 
     // Commit round.
     inc(partnerCount, pairKey(...best.teamA));
