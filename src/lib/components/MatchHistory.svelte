@@ -40,7 +40,18 @@
   }
   const roundsPlayed = (m) => (m.rounds || []).filter((r) => r.scoreA != null && r.scoreB != null).length;
 
+  // Full session standings for the Americano detail sheet.
+  function americanoStandings(m) {
+    const rounds = m.rounds || [];
+    const ids = [...new Set(rounds.flatMap((r) => [...(r.teamA || []), ...(r.teamB || [])]))];
+    const totals = sessionTotals(rounds, ids);
+    return Object.entries(totals)
+      .map(([id, t]) => ({ id, ...t }))
+      .sort((a, b) => b.points - a.points || b.wins - a.wins);
+  }
+
   let confirmDel = $state(null);
+  let sessionDetail = $state(null); // an americano match to show in full
 </script>
 
 <div class="space-y-3">
@@ -102,8 +113,11 @@
 
       {:else if m.mode === 'americano'}
         {@const top = americanoTop(m)}
-        <div class="text-xs tx-muted">{roundsPlayed(m)} rounds · {top.length} players</div>
-        <div class="space-y-1">
+        <button class="w-full text-left space-y-1 active:scale-[0.99] transition" onclick={() => (sessionDetail = m)}>
+          <div class="text-xs flex items-center justify-between">
+            <span class="tx-muted">{roundsPlayed(m)} rounds · {top.length} players</span>
+            <span class="neon-text font-semibold">Full results ›</span>
+          </div>
           {#each top.slice(0, 3) as r, idx}
             <div class="flex items-center gap-2 text-sm">
               <span class="w-4 text-center">{['🥇', '🥈', '🥉'][idx]}</span>
@@ -111,11 +125,65 @@
               <span class="mono font-bold {idx === 0 ? 'neon-text' : 'tx'}">{r.points}</span>
             </div>
           {/each}
-        </div>
+          {#if top.length > 3}
+            <div class="text-[11px] tx-faint pl-6">+{top.length - 3} more…</div>
+          {/if}
+        </button>
       {/if}
     </div>
   {/each}
 </div>
+
+{#if sessionDetail}
+  {@const st = americanoStandings(sessionDetail)}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/70 backdrop-blur-sm"
+       transition:fade={{ duration: 150 }}
+       onclick={(e) => { if (e.target === e.currentTarget) sessionDetail = null; }} role="presentation">
+    <div class="glass rounded-3xl w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+         transition:fly={{ y: 30, duration: 250 }} role="dialog" aria-modal="true" tabindex="-1">
+      <div>
+        <div class="h-display font-extrabold text-lg tx">🔀 Americano</div>
+        <div class="text-xs tx-muted">{when(sessionDetail.date)} · {roundsPlayed(sessionDetail)} rounds · {st.length} players</div>
+      </div>
+
+      <!-- Full standings -->
+      <div>
+        <div class="label !mb-1.5">Final standings</div>
+        <div class="space-y-1">
+          {#each st as r, idx (r.id)}
+            <div class="glass rounded-xl px-3 py-2 flex items-center gap-2.5">
+              <span class="w-6 text-center">{idx < 3 ? ['🥇', '🥈', '🥉'][idx] : idx + 1}</span>
+              <Avatar player={byId[r.id]} size={28} />
+              <span class="flex-1 truncate text-sm font-medium tx">{name(r.id)}</span>
+              <span class="text-[11px] tx-faint mono">{r.wins}W · {r.games}g</span>
+              <span class="mono font-bold text-lg {idx === 0 ? 'neon-text' : 'tx'} w-8 text-right">{r.points}</span>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Round by round -->
+      <div>
+        <div class="label !mb-1.5">Round by round</div>
+        <div class="space-y-1">
+          {#each sessionDetail.rounds as g}
+            {@const a = +g.scoreA}
+            {@const b = +g.scoreB}
+            {@const scored = g.scoreA != null && g.scoreB != null}
+            <div class="flex items-center gap-2 text-xs">
+              <span class="w-5 tx-faint mono">{g.round}</span>
+              <span class="flex-1 text-right truncate {scored && a > b ? 'tx font-semibold' : 'tx-muted'}">{(g.teamA || []).map(name).join(' & ')}</span>
+              <span class="mono font-bold tx w-12 text-center">{scored ? `${a}–${b}` : '–'}</span>
+              <span class="flex-1 truncate {scored && b > a ? 'tx font-semibold' : 'tx-muted'}">{(g.teamB || []).map(name).join(' & ')}</span>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <button class="btn btn-ghost w-full" onclick={() => (sessionDetail = null)}>Close</button>
+    </div>
+  </div>
+{/if}
 
 {#if confirmDel}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" transition:fade={{ duration: 150 }}

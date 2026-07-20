@@ -71,7 +71,12 @@ export function generateSchedule(playerIds, rounds = 12) {
   if (playerIds.length < 4) {
     throw new Error('Pick at least 4 players for an Americano.');
   }
-  const ATTEMPTS = 60;
+  const n = playerIds.length;
+  // Best achievable consecutive-play streak: with (n-4) resting each round a
+  // player can't be benched more often than that allows. n<=4 → nobody rests.
+  const streakFloor = n <= 4 ? rounds : Math.max(1, Math.ceil(4 / (n - 4)));
+
+  const ATTEMPTS = 120;
   let best = null;
   let bestCost = Infinity;
   for (let t = 0; t < ATTEMPTS; t++) {
@@ -81,11 +86,13 @@ export function generateSchedule(playerIds, rounds = 12) {
     const partnerMax = pc.length ? Math.max(...pc) : 0;
     const rv = Object.values(cand.fairness.restCount);
     const restSpread = Math.max(...rv) - Math.min(...rv);
-    const cost = identicalGames * 10000 + partnerMax * 100 + restSpread;
+    const maxConsec = cand.fairness.maxConsec;
+    // Priority: no duplicate games > balanced rest > short streaks > partner spread.
+    const cost = identicalGames * 100000 + restSpread * 5000 + maxConsec * 500 + partnerMax * 100;
     if (cost < bestCost) {
       bestCost = cost;
       best = cand;
-      if (identicalGames === 0 && restSpread <= 1) break; // can't do better
+      if (identicalGames === 0 && restSpread <= 1 && maxConsec <= streakFloor) break; // optimal
     }
   }
   return best;
@@ -100,6 +107,8 @@ function buildSchedule(playerIds, rounds) {
   const matchupCount = {}; // whole-game key -> times this exact 2v2 has happened
   const restCount = Object.fromEntries(ids.map((id) => [id, 0]));
   const playCount = Object.fromEntries(ids.map((id) => [id, 0]));
+  const consec = Object.fromEntries(ids.map((id) => [id, 0])); // consecutive rounds played
+  let maxConsec = 0;
 
   const inc = (map, k) => (map[k] = (map[k] || 0) + 1);
   const get = (map, k) => map[k] || 0;
@@ -124,6 +133,10 @@ function buildSchedule(playerIds, rounds) {
       const rv = Object.values(restAfter);
       const restSpread = Math.max(...rv) - Math.min(...rv);
 
+      // Longest consecutive-play streak this choice would create — penalise so
+      // nobody plays many rounds in a row while others sit repeatedly.
+      const maxActiveStreak = Math.max(...active.map((id) => consec[id] + 1));
+
       for (const [teamA, teamB] of pairingsOf(active)) {
         const partnerRepeat = get(partnerCount, pairKey(...teamA)) + get(partnerCount, pairKey(...teamB));
         let oppRepeat = 0;
@@ -131,7 +144,8 @@ function buildSchedule(playerIds, rounds) {
         const mk = matchupKey(teamA, teamB);
         const matchupRepeat = get(matchupCount, mk);
 
-        const score = restSpread * 1000 + partnerRepeat * 100 + matchupRepeat * 20 + oppRepeat;
+        const score =
+          restSpread * 10000 + matchupRepeat * 600 + maxActiveStreak * 250 + partnerRepeat * 100 + oppRepeat;
         if (score < bestScore) {
           bestScore = score;
           bestChoices = [{ resters, teamA, teamB, mk }];
@@ -147,8 +161,15 @@ function buildSchedule(playerIds, rounds) {
     inc(partnerCount, pairKey(...best.teamB));
     for (const a of best.teamA) for (const b of best.teamB) inc(opponentCount, pairKey(a, b));
     inc(matchupCount, best.mk);
-    for (const id of best.resters) restCount[id]++;
-    for (const id of ids.filter((x) => !best.resters.includes(x))) playCount[id]++;
+    for (const id of best.resters) {
+      restCount[id]++;
+      consec[id] = 0;
+    }
+    for (const id of ids.filter((x) => !best.resters.includes(x))) {
+      playCount[id]++;
+      consec[id]++;
+      if (consec[id] > maxConsec) maxConsec = consec[id];
+    }
 
     schedule.push({
       round: r + 1,
@@ -162,7 +183,7 @@ function buildSchedule(playerIds, rounds) {
 
   return {
     rounds: schedule,
-    fairness: { partnerCount, opponentCount, matchupCount, restCount, playCount },
+    fairness: { partnerCount, opponentCount, matchupCount, restCount, playCount, maxConsec },
   };
 }
 
