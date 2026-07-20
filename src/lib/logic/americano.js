@@ -78,7 +78,7 @@ export function generateSchedule(playerIds, rounds = 12) {
 
   // Small groups have the tightest combinatorics (fewest distinct games to
   // draw from), so satisfying every constraint at once takes more tries.
-  const ATTEMPTS = n <= 6 ? 400 : n <= 8 ? 150 : 60;
+  const ATTEMPTS = n <= 6 ? 500 : n <= 8 ? 180 : 80;
   let best = null;
   let bestCost = Infinity;
   for (let t = 0; t < ATTEMPTS; t++) {
@@ -87,22 +87,26 @@ export function generateSchedule(playerIds, rounds = 12) {
     const identicalGames = cand.rounds.length - Object.keys(f.matchupCount).length;
     const rv = Object.values(f.restCount);
     const restSpread = Math.max(...rv) - Math.min(...rv);
-    // Priority: no duplicate games > balanced rest > no back-to-back bench >
-    // no back-to-back partners > even opponents > short play streaks > even partners.
+    // Same strict tiering as the per-round score: no duplicate games > no
+    // back-to-back bench > no back-to-back partners > even partner spread >
+    // even opponent spread > balanced rest > short play streaks.
     const cost =
-      identicalGames * 10_000_000 +
-      restSpread * 1_000_000 +
-      f.backToBackBench * 100_000 +
-      f.backToBackPartner * 30_000 +
-      f.oppSpread * 2_000 +
-      f.maxConsec * 500 +
-      f.partnerSpread * 100;
+      identicalGames * 100_000_000 +
+      f.backToBackBench * 5_000_000 +
+      f.backToBackPartner * 1_000_000 +
+      f.partnerSpread * 50_000 +
+      f.oppSpread * 20_000 +
+      restSpread * 2_000 +
+      f.maxConsec * 300;
     if (cost < bestCost) {
       bestCost = cost;
       best = cand;
-      // Ideal: no dups, balanced rest, no back-to-backs, tight streaks.
+      // Ideal: no dups, every pair within 1 of every other pair, balanced
+      // rest, no back-to-backs, tight streaks.
       if (
         identicalGames === 0 &&
+        f.partnerSpread <= 1 &&
+        f.oppSpread <= 1 &&
         restSpread <= 1 &&
         f.backToBackBench === 0 &&
         f.backToBackPartner === 0 &&
@@ -140,13 +144,20 @@ function buildSchedule(playerIds, rounds) {
 
   for (let r = 0; r < rounds; r++) {
     // Score every (who-plays × pairing) candidate. Priority (high → low):
-    //   no replayed game  >  rest balance  >  no back-to-back bench  >
-    //   no back-to-back partners  >  no long play streak  >  partner spread  >
-    //   opponent spread.
+    //   no replayed game  >  even partner/opponent spread  >  rest balance  >
+    //   no back-to-back bench/partners  >  no long play streak.
     // Duplicate-avoidance comes FIRST even in this per-round greedy step: a
     // rest imbalance can still be corrected in a later round, but a duplicate
     // game, once played, can never be undone — so it must never lose to any
-    // other consideration, including rest balance.
+    // other consideration.
+    //
+    // Partner/opponent balance uses a QUADRATIC penalty on the count a pair
+    // would reach (1st time costs 1, 2nd costs 4, 3rd costs 9, ...). A flat
+    // per-repeat cost only discourages the most-recent repeat; squaring makes
+    // an already-frequent pair drastically more expensive to pick again than
+    // a pair that's never happened — which is what actually keeps every pair
+    // within 1-2 of each other instead of letting a few pairs run away while
+    // others never occur.
     let bestScore = Infinity;
     let bestChoices = [];
     for (const active of activeCombos) {
@@ -167,21 +178,28 @@ function buildSchedule(playerIds, rounds) {
       for (const [teamA, teamB] of pairingsOf(active)) {
         const pkA = pairKey(...teamA);
         const pkB = pairKey(...teamB);
-        const partnerRepeat = get(partnerCount, pkA) + get(partnerCount, pkB);
         const consecPartner = (lastPartnerKeys.has(pkA) ? 1 : 0) + (lastPartnerKeys.has(pkB) ? 1 : 0);
-        let oppRepeat = 0;
-        for (const a of teamA) for (const b of teamB) oppRepeat += get(opponentCount, pairKey(a, b));
         const mk = matchupKey(teamA, teamB);
         const matchupRepeat = get(matchupCount, mk);
 
+        // Quadratic cost of the count each pair WOULD reach after this game.
+        const partnerCost = (get(partnerCount, pkA) + 1) ** 2 + (get(partnerCount, pkB) + 1) ** 2;
+        let oppCost = 0;
+        for (const a of teamA) for (const b of teamB) oppCost += (get(opponentCount, pairKey(a, b)) + 1) ** 2;
+
+        // Strict tiering, each ~10x the max possible total of everything below
+        // it, so a higher tier NEVER gets traded away for a lower one:
+        //   1. never replay a game            2. never bench back-to-back
+        //   3. never re-partner back-to-back   4. even partner spread (quadratic)
+        //   5. even opponent spread (quadratic) 6. rest balance  7. short streaks
         const score =
-          matchupRepeat * 10_000_000 +
-          restSpread * 1_000_000 +
-          consecRest * 10_000 +
-          consecPartner * 3_000 +
-          maxActiveStreak * 500 +
-          partnerRepeat * 120 +
-          oppRepeat * 60;
+          matchupRepeat * 1_000_000_000 +
+          consecRest * 40_000_000 +
+          consecPartner * 8_000_000 +
+          partnerCost * 200_000 +
+          oppCost * 50_000 +
+          restSpread * 5_000 +
+          maxActiveStreak * 300;
 
         if (score < bestScore) {
           bestScore = score;
