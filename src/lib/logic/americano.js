@@ -76,23 +76,39 @@ export function generateSchedule(playerIds, rounds = 12) {
   // player can't be benched more often than that allows. n<=4 → nobody rests.
   const streakFloor = n <= 4 ? rounds : Math.max(1, Math.ceil(4 / (n - 4)));
 
-  const ATTEMPTS = 120;
+  // Small groups have the tightest combinatorics (fewest distinct games to
+  // draw from), so satisfying every constraint at once takes more tries.
+  const ATTEMPTS = n <= 6 ? 400 : n <= 8 ? 150 : 60;
   let best = null;
   let bestCost = Infinity;
   for (let t = 0; t < ATTEMPTS; t++) {
     const cand = buildSchedule(playerIds, rounds);
-    const identicalGames = cand.rounds.length - Object.keys(cand.fairness.matchupCount).length;
-    const pc = Object.values(cand.fairness.partnerCount);
-    const partnerMax = pc.length ? Math.max(...pc) : 0;
-    const rv = Object.values(cand.fairness.restCount);
+    const f = cand.fairness;
+    const identicalGames = cand.rounds.length - Object.keys(f.matchupCount).length;
+    const rv = Object.values(f.restCount);
     const restSpread = Math.max(...rv) - Math.min(...rv);
-    const maxConsec = cand.fairness.maxConsec;
-    // Priority: no duplicate games > balanced rest > short streaks > partner spread.
-    const cost = identicalGames * 100000 + restSpread * 5000 + maxConsec * 500 + partnerMax * 100;
+    // Priority: no duplicate games > balanced rest > no back-to-back bench >
+    // no back-to-back partners > even opponents > short play streaks > even partners.
+    const cost =
+      identicalGames * 10_000_000 +
+      restSpread * 1_000_000 +
+      f.backToBackBench * 100_000 +
+      f.backToBackPartner * 30_000 +
+      f.oppSpread * 2_000 +
+      f.maxConsec * 500 +
+      f.partnerSpread * 100;
     if (cost < bestCost) {
       bestCost = cost;
       best = cand;
-      if (identicalGames === 0 && restSpread <= 1 && maxConsec <= streakFloor) break; // optimal
+      // Ideal: no dups, balanced rest, no back-to-backs, tight streaks.
+      if (
+        identicalGames === 0 &&
+        restSpread <= 1 &&
+        f.backToBackBench === 0 &&
+        f.backToBackPartner === 0 &&
+        f.maxConsec <= streakFloor
+      )
+        break;
     }
   }
   return best;
@@ -110,57 +126,80 @@ function buildSchedule(playerIds, rounds) {
   const consec = Object.fromEntries(ids.map((id) => [id, 0])); // consecutive rounds played
   let maxConsec = 0;
 
+  // Smoothness trackers (previous round).
+  let lastResters = [];
+  let lastPartnerKeys = new Set();
+  let backToBackBench = 0; // times a player was benched two rounds running
+  let backToBackPartner = 0; // times a partnership repeated in consecutive rounds
+
   const inc = (map, k) => (map[k] = (map[k] || 0) + 1);
   const get = (map, k) => map[k] || 0;
-  // Every way to choose the 4 players who play this round; the rest sit out.
   const activeCombos = combinations(ids, 4);
 
   const schedule = [];
 
   for (let r = 0; r < rounds; r++) {
-    // Jointly consider every (who-plays × pairing) candidate and pick the best
-    // mix, weighted so that:
-    //   rest stays balanced  >>  partners spread out  >>  no exact-game replays
-    //   >>  opponents spread out.
-    // Collect ALL equally-best candidates, then pick one at random — keeps the
-    // schedule optimal but different every time.
+    // Score every (who-plays × pairing) candidate. Priority (high → low):
+    //   no replayed game  >  rest balance  >  no back-to-back bench  >
+    //   no back-to-back partners  >  no long play streak  >  partner spread  >
+    //   opponent spread.
+    // Duplicate-avoidance comes FIRST even in this per-round greedy step: a
+    // rest imbalance can still be corrected in a later round, but a duplicate
+    // game, once played, can never be undone — so it must never lose to any
+    // other consideration, including rest balance.
     let bestScore = Infinity;
     let bestChoices = [];
     for (const active of activeCombos) {
       const resters = ids.filter((id) => !active.includes(id));
-      const restAfter = { ...restCount };
-      for (const id of resters) restAfter[id]++;
-      const rv = Object.values(restAfter);
-      const restSpread = Math.max(...rv) - Math.min(...rv);
-
-      // Longest consecutive-play streak this choice would create — penalise so
-      // nobody plays many rounds in a row while others sit repeatedly.
-      const maxActiveStreak = Math.max(...active.map((id) => consec[id] + 1));
+      // Rest spread if these players sit out — computed without cloning.
+      let mx = -1;
+      let mn = Infinity;
+      for (const id of ids) {
+        const v = restCount[id] + (resters.includes(id) ? 1 : 0);
+        if (v > mx) mx = v;
+        if (v < mn) mn = v;
+      }
+      const restSpread = mx - mn;
+      const consecRest = resters.filter((id) => lastResters.includes(id)).length; // back-to-back bench
+      let maxActiveStreak = 0;
+      for (const id of active) if (consec[id] + 1 > maxActiveStreak) maxActiveStreak = consec[id] + 1;
 
       for (const [teamA, teamB] of pairingsOf(active)) {
-        const partnerRepeat = get(partnerCount, pairKey(...teamA)) + get(partnerCount, pairKey(...teamB));
+        const pkA = pairKey(...teamA);
+        const pkB = pairKey(...teamB);
+        const partnerRepeat = get(partnerCount, pkA) + get(partnerCount, pkB);
+        const consecPartner = (lastPartnerKeys.has(pkA) ? 1 : 0) + (lastPartnerKeys.has(pkB) ? 1 : 0);
         let oppRepeat = 0;
         for (const a of teamA) for (const b of teamB) oppRepeat += get(opponentCount, pairKey(a, b));
         const mk = matchupKey(teamA, teamB);
         const matchupRepeat = get(matchupCount, mk);
 
         const score =
-          restSpread * 10000 + matchupRepeat * 600 + maxActiveStreak * 250 + partnerRepeat * 100 + oppRepeat;
+          matchupRepeat * 10_000_000 +
+          restSpread * 1_000_000 +
+          consecRest * 10_000 +
+          consecPartner * 3_000 +
+          maxActiveStreak * 500 +
+          partnerRepeat * 120 +
+          oppRepeat * 60;
+
         if (score < bestScore) {
           bestScore = score;
-          bestChoices = [{ resters, teamA, teamB, mk }];
+          bestChoices = [{ resters, teamA, teamB, mk, pkA, pkB }];
         } else if (score === bestScore) {
-          bestChoices.push({ resters, teamA, teamB, mk });
+          bestChoices.push({ resters, teamA, teamB, mk, pkA, pkB });
         }
       }
     }
     const best = bestChoices[Math.floor(Math.random() * bestChoices.length)];
 
     // Commit round.
-    inc(partnerCount, pairKey(...best.teamA));
-    inc(partnerCount, pairKey(...best.teamB));
+    inc(partnerCount, best.pkA);
+    inc(partnerCount, best.pkB);
     for (const a of best.teamA) for (const b of best.teamB) inc(opponentCount, pairKey(a, b));
     inc(matchupCount, best.mk);
+    backToBackBench += best.resters.filter((id) => lastResters.includes(id)).length;
+    backToBackPartner += (lastPartnerKeys.has(best.pkA) ? 1 : 0) + (lastPartnerKeys.has(best.pkB) ? 1 : 0);
     for (const id of best.resters) {
       restCount[id]++;
       consec[id] = 0;
@@ -170,6 +209,8 @@ function buildSchedule(playerIds, rounds) {
       consec[id]++;
       if (consec[id] > maxConsec) maxConsec = consec[id];
     }
+    lastResters = best.resters;
+    lastPartnerKeys = new Set([best.pkA, best.pkB]);
 
     schedule.push({
       round: r + 1,
@@ -181,9 +222,27 @@ function buildSchedule(playerIds, rounds) {
     });
   }
 
+  // Global balance spreads (over all possible pairs, so never-met counts as 0).
+  const allPairKeys = combinations(ids, 2).map(([a, b]) => pairKey(a, b));
+  const spread = (map) => {
+    const vals = allPairKeys.map((k) => map[k] || 0);
+    return Math.max(...vals) - Math.min(...vals);
+  };
+
   return {
     rounds: schedule,
-    fairness: { partnerCount, opponentCount, matchupCount, restCount, playCount, maxConsec },
+    fairness: {
+      partnerCount,
+      opponentCount,
+      matchupCount,
+      restCount,
+      playCount,
+      maxConsec,
+      backToBackBench,
+      backToBackPartner,
+      oppSpread: spread(opponentCount),
+      partnerSpread: spread(partnerCount),
+    },
   };
 }
 

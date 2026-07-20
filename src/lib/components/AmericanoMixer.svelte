@@ -28,10 +28,15 @@
     picked = next;
   }
 
-  function start() {
-    if (!canStart) return;
+  let generating = $state(false);
+
+  async function start() {
+    if (!canStart || generating) return;
+    generating = true;
+    await new Promise((r) => setTimeout(r)); // let the busy state paint first
     const ids = $players.filter((p) => picked.has(p.id)).map((p) => p.id);
     const { rounds: schedule } = generateSchedule(ids, rounds);
+    generating = false;
     startSession(ids, schedule);
   }
 
@@ -114,9 +119,9 @@
       <div class="flex justify-between text-[10px] tx-faint"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
     </div>
 
-    <button class="btn btn-primary w-full text-lg" disabled={!canStart} onclick={start}
-            style={canStart ? '' : 'opacity:0.4;pointer-events:none;'}>
-      ⚡ Generate Schedule
+    <button class="btn btn-primary w-full text-lg" disabled={!canStart || generating} onclick={start}
+            style={canStart && !generating ? '' : 'opacity:0.5;pointer-events:none;'}>
+      {generating ? '🔄 Mixing…' : '⚡ Generate Schedule'}
     </button>
   </div>
 {:else}
