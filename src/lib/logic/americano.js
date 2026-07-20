@@ -187,12 +187,19 @@ function buildSchedule(playerIds, rounds) {
   };
 }
 
+// A round counts only if it was actually played: both scores entered and not
+// 0–0. Padel games never end 0–0, so a blank/0–0 round means "not played" and
+// is excluded from stats so it can't unfairly affect anyone's points.
+export function roundPlayed(r) {
+  return !!r && r.scoreA != null && r.scoreB != null && +r.scoreA + +r.scoreB > 0;
+}
+
 // Tally per-player points from a completed/in-progress session's rounds.
 // In Americano, each player earns the points their team scored that game.
 export function sessionTotals(rounds, playerIds) {
   const totals = Object.fromEntries(playerIds.map((id) => [id, { points: 0, conceded: 0, games: 0, wins: 0 }]));
   for (const g of rounds) {
-    if (g.scoreA == null || g.scoreB == null) continue;
+    if (!roundPlayed(g)) continue;
     const a = +g.scoreA;
     const b = +g.scoreB;
     for (const id of g.teamA) {

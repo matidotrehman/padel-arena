@@ -2,7 +2,7 @@
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import { matches, players, deleteMatch, fixedOutcome } from '../stores/store.js';
-  import { sessionTotals } from '../logic/americano.js';
+  import { sessionTotals, roundPlayed } from '../logic/americano.js';
   import Avatar from './Avatar.svelte';
 
   const byId = $derived(Object.fromEntries($players.map((p) => [p.id, p])));
@@ -38,7 +38,7 @@
       .map(([id, t]) => ({ id, points: t.points, wins: t.wins }))
       .sort((a, b) => b.points - a.points);
   }
-  const roundsPlayed = (m) => (m.rounds || []).filter((r) => r.scoreA != null && r.scoreB != null).length;
+  const roundsPlayed = (m) => (m.rounds || []).filter(roundPlayed).length;
 
   // Full session standings for the Americano detail sheet.
   function americanoStandings(m) {
@@ -169,11 +169,11 @@
           {#each sessionDetail.rounds as g}
             {@const a = +g.scoreA}
             {@const b = +g.scoreB}
-            {@const scored = g.scoreA != null && g.scoreB != null}
-            <div class="flex items-center gap-2 text-xs">
+            {@const scored = roundPlayed(g)}
+            <div class="flex items-center gap-2 text-xs {scored ? '' : 'opacity-45'}">
               <span class="w-5 tx-faint mono">{g.round}</span>
               <span class="flex-1 text-right truncate {scored && a > b ? 'tx font-semibold' : 'tx-muted'}">{(g.teamA || []).map(name).join(' & ')}</span>
-              <span class="mono font-bold tx w-12 text-center">{scored ? `${a}–${b}` : '–'}</span>
+              <span class="mono font-bold w-16 text-center {scored ? 'tx' : 'tx-faint'}">{scored ? `${a}–${b}` : 'not played'}</span>
               <span class="flex-1 truncate {scored && b > a ? 'tx font-semibold' : 'tx-muted'}">{(g.teamB || []).map(name).join(' & ')}</span>
             </div>
           {/each}

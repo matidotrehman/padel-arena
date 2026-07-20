@@ -10,7 +10,7 @@ import {
   NEON_PALETTE,
 } from '../logic/persistence.js';
 import { rankedPlayers } from '../logic/stats.js';
-import { sessionTotals } from '../logic/americano.js';
+import { sessionTotals, roundPlayed } from '../logic/americano.js';
 import { mergeStates } from '../logic/merge.js';
 import { rankMode } from './prefs.js';
 
@@ -90,7 +90,7 @@ function applyMatch(byId, m) {
       p.pointsConceded += t.conceded;
     }
     for (const g of rounds) {
-      if (g.scoreA == null || g.scoreB == null) continue;
+      if (!roundPlayed(g)) continue;
       const a = +g.scoreA;
       const b = +g.scoreB;
       if (a === b) continue;

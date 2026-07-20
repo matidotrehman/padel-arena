@@ -1,5 +1,6 @@
 <script>
   import Avatar from './Avatar.svelte';
+  import { roundPlayed } from '../logic/americano.js';
 
   let { round, index, playersById, onscore, isNext = false } = $props();
 
@@ -7,7 +8,7 @@
   const teamB = $derived(round.teamB.map((id) => playersById[id]).filter(Boolean));
   const resting = $derived(round.resting.map((id) => playersById[id]).filter(Boolean));
 
-  const done = $derived(round.scoreA != null && round.scoreB != null);
+  const done = $derived(roundPlayed(round));
   const aWon = $derived(done && +round.scoreA > +round.scoreB);
   const bWon = $derived(done && +round.scoreB > +round.scoreA);
 

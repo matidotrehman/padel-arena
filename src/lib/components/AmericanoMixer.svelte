@@ -3,7 +3,7 @@
   import { flip } from 'svelte/animate';
   import { players, mergeAmericano } from '../stores/store.js';
   import { session, startSession, updateRoundScore, endSession } from '../stores/session.js';
-  import { generateSchedule, suggestedRounds, sessionTotals } from '../logic/americano.js';
+  import { generateSchedule, suggestedRounds, sessionTotals, roundPlayed } from '../logic/americano.js';
   import { celebrate } from '../logic/celebrate.js';
   import RoundCard from './RoundCard.svelte';
   import Avatar from './Avatar.svelte';
@@ -45,14 +45,10 @@
           .sort((a, b) => b.points - a.points || b.wins - a.wins)
       : []
   );
-  const playedCount = $derived(
-    $session ? $session.rounds.filter((r) => r.scoreA != null && r.scoreB != null).length : 0
-  );
+  const playedCount = $derived($session ? $session.rounds.filter(roundPlayed).length : 0);
   const totalRounds = $derived($session ? $session.rounds.length : 0);
-  // First not-yet-scored round → "Up next" on the courtside sheet.
-  const nextIndex = $derived(
-    $session ? $session.rounds.findIndex((r) => r.scoreA == null || r.scoreB == null) : -1
-  );
+  // First not-yet-played round → "Up next" on the courtside sheet.
+  const nextIndex = $derived($session ? $session.rounds.findIndex((r) => !roundPlayed(r)) : -1);
 
   let merged = $state(false);
   let showFinalize = $state(false);
