@@ -116,6 +116,7 @@ export function sessionTotals(rounds, playerIds) {
 
 const PENALTY = {
   DUPLICATE_MATCHUP: 1_000_000_000, // an exact {A,B} vs {C,D} game repeating
+  PARTNER_CAP_EXCESS: 200_000_000, // a pair partnering more than the hard cap allows
   BACK_TO_BACK_SIT: 20_000_000, // a player benched two rounds running
   BACK_TO_BACK_PARTNER: 4_000_000, // a partnership repeating in consecutive rounds
   SIT_SPREAD: 500_000, // per unit a player's sit-count is beyond the allowed +/-1 band
@@ -208,12 +209,30 @@ function evaluateSchedule(schedule, ids) {
   };
 }
 
-function costOf(ev) {
+// Quadratic cost for exceeding the hard partnership cap: (excess)^2 summed
+// over every pair. This is weighted (PARTNER_CAP_EXCESS, between duplicate-
+// avoidance and back-to-back-sit) high enough that the search essentially
+// never lets any pair over the cap UNLESS doing so is the only way to avoid
+// an even higher-priority violation — chiefly a duplicate game. That
+// subordination matters: the cap is a strong preference, but "every 2v2
+// matchup must be unique" is the one rule that must never be broken to
+// satisfy it.
+function capExcessCost(ev, partnerCap) {
+  let cost = 0;
+  for (const v of Object.values(ev.partnerCount)) {
+    const excess = v - partnerCap;
+    if (excess > 0) cost += excess * excess;
+  }
+  return cost;
+}
+
+function costOf(ev, partnerCap) {
   const sitSpreadExtra = Math.max(0, ev.sitSpread - 1);
   const partnerSpreadExtra = Math.max(0, ev.partnerSpread - 1) + ev.overCoupled;
   const opponentSpreadExtra = Math.max(0, ev.opponentSpread - 1);
   return (
     ev.duplicateMatchups * PENALTY.DUPLICATE_MATCHUP +
+    capExcessCost(ev, partnerCap) * PENALTY.PARTNER_CAP_EXCESS +
     ev.backToBackSits * PENALTY.BACK_TO_BACK_SIT +
     ev.backToBackPartners * PENALTY.BACK_TO_BACK_PARTNER +
     sitSpreadExtra * PENALTY.SIT_SPREAD +
@@ -227,7 +246,7 @@ function costOf(ev) {
 // Phase 1 — construction: one randomised greedy pass
 // =============================================================================
 
-function buildInitialSchedule(playerIds, rounds) {
+function buildInitialSchedule(playerIds, rounds, partnerCap) {
   const ids = shuffle([...playerIds]);
   const activeCombos = combinations(ids, 4);
 
@@ -263,15 +282,20 @@ function buildInitialSchedule(playerIds, rounds) {
       for (const [teamA, teamB] of pairingsOf(active)) {
         const pkA = pairKey(...teamA);
         const pkB = pairKey(...teamB);
+        const newPartnerA = get(partnerCount, pkA) + 1;
+        const newPartnerB = get(partnerCount, pkB) + 1;
+        const capExcess = Math.max(0, newPartnerA - partnerCap) ** 2 + Math.max(0, newPartnerB - partnerCap) ** 2;
+
         const consecPartner = (lastPartnerKeys.has(pkA) ? 1 : 0) + (lastPartnerKeys.has(pkB) ? 1 : 0);
         const mk = matchupKey(teamA, teamB);
         const matchupRepeat = get(matchupCount, mk);
-        const partnerCost = (get(partnerCount, pkA) + 1) ** 2 + (get(partnerCount, pkB) + 1) ** 2;
+        const partnerCost = newPartnerA ** 2 + newPartnerB ** 2;
         let oppCost = 0;
         for (const a of teamA) for (const b of teamB) oppCost += (get(opponentCount, pairKey(a, b)) + 1) ** 2;
 
         const score =
           matchupRepeat * 1_000_000_000 +
+          capExcess * 200_000_000 +
           consecSit * 40_000_000 +
           consecPartner * 8_000_000 +
           partnerCost * 200_000 +
@@ -348,7 +372,7 @@ function withRound(schedule, idx, option) {
 // option lowers the schedule's cost the most, if any does. Returns whether
 // anything improved. Mutates `state.current`/`state.currentCost` in place and
 // updates `state.best`/`state.bestCost` whenever a new low is found.
-function greedySweep(state, options, ids, deadline) {
+function greedySweep(state, options, ids, deadline, partnerCap) {
   let improved = false;
   const order = shuffle([...Array(state.current.length).keys()]);
 
@@ -359,7 +383,7 @@ function greedySweep(state, options, ids, deadline) {
     let localBestCost = state.currentCost;
     for (const opt of options) {
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids));
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
       if (cost < localBestCost) {
         localBestCost = cost;
         localBest = candidate;
@@ -387,15 +411,15 @@ function greedySweep(state, options, ids, deadline) {
 // point is tracked separately (`state.best`) and is always what's returned —
 // an exploration burst that wanders off can never make the final result
 // worse, only potentially better.
-function refineSchedule(initial, ids, deadline) {
+function refineSchedule(initial, ids, deadline, partnerCap) {
   const options = allRoundOptions(ids);
-  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids)), best: initial, bestCost: Infinity };
+  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids), partnerCap), best: initial, bestCost: Infinity };
   state.bestCost = state.currentCost;
   state.best = state.current;
 
   // Phase 1 — hill-climb straight to the nearest local optimum.
   while (Date.now() < deadline && state.bestCost > 0) {
-    if (!greedySweep(state, options, ids, deadline)) break;
+    if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
   }
   if (state.bestCost === 0) return state.best;
 
@@ -412,7 +436,7 @@ function refineSchedule(initial, ids, deadline) {
       const idx = Math.floor(Math.random() * state.current.length);
       const opt = options[Math.floor(Math.random() * options.length)];
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids));
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
       const delta = cost - state.currentCost;
       if (delta <= 0 || Math.random() < Math.exp(-delta / temperature)) {
         state.current = candidate;
@@ -428,7 +452,7 @@ function refineSchedule(initial, ids, deadline) {
 
     // Exploitative re-climb from wherever the burst landed.
     while (Date.now() < deadline) {
-      if (!greedySweep(state, options, ids, deadline)) break;
+      if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
       if (state.bestCost === 0) return state.best;
     }
   }
@@ -456,14 +480,23 @@ export function generateSchedule(playerIds, rounds = 12) {
   }
   const ids = [...playerIds];
 
+  // Hard cap on how many times any two players may partner: the minimum
+  // achievable given the maths (total partnership slots = rounds * 2, spread
+  // across every possible pair), rounded up. For 6 players / 12 rounds this
+  // is exactly 2 — nobody partners a 3rd time. Enforced as a true constraint
+  // (candidates that would exceed it are excluded, not just penalised) in
+  // both construction and refinement below.
+  const totalPairs = (ids.length * (ids.length - 1)) / 2;
+  const partnerCap = Math.max(1, Math.ceil((rounds * 2) / totalPairs));
+
   // Time budget scales gently with player/round count — harder instances get
   // more search time. A mixer generation may take a couple of seconds; that's
   // an accepted trade for a well-mixed schedule.
   const budgetMs = Math.min(5000, 1200 + ids.length * 150 + rounds * 40);
   const deadline = Date.now() + budgetMs;
 
-  const initial = buildInitialSchedule(ids, rounds);
-  const schedule = refineSchedule(initial, ids, deadline);
+  const initial = buildInitialSchedule(ids, rounds, partnerCap);
+  const schedule = refineSchedule(initial, ids, deadline, partnerCap);
   const ev = evaluateSchedule(schedule, ids);
 
   return {
@@ -480,6 +513,7 @@ export function generateSchedule(playerIds, rounds = 12) {
       oppSpread: ev.opponentSpread,
       partnerSpread: ev.partnerSpread,
       duplicateMatchups: ev.duplicateMatchups,
+      partnerCap,
     },
   };
 }
