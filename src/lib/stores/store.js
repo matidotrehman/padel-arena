@@ -64,8 +64,10 @@ export function fixedOutcome(match) {
 
 // Apply one stored match record onto a { id -> player } map. This is the
 // single source of truth for stats, used both when logging and when
-// recomputing after a deletion — so they can never drift apart.
-function applyMatch(byId, m) {
+// recomputing after a deletion — so they can never drift apart. Exported so
+// range-scoped stats (rangeStats.js) can replay a filtered match list through
+// the exact same reducer instead of duplicating it.
+export function applyMatch(byId, m) {
   if (m.mode === 'fixed') {
     const { scoreA, scoreB, aWins, aChoked, bChoked } = fixedOutcome(m);
     for (const id of m.teamA || []) if (byId[id]) applyResult(byId[id], aWins, scoreA, scoreB, aChoked);

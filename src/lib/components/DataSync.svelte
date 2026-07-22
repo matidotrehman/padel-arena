@@ -105,7 +105,7 @@
 
   {#if toast}
     <div class="fixed bottom-24 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-2 text-sm font-medium z-50"
-         transition:fade style="border-color:rgba(182,255,46,0.4);">{toast}</div>
+         transition:fade style="border-color:rgba(16,185,129,0.4);">{toast}</div>
   {/if}
 
   <!-- Import confirm -->

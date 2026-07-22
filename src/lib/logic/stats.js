@@ -42,6 +42,15 @@ export function avgPoints(p) {
   return +(p.pointsWon / p.matchesPlayed).toFixed(1);
 }
 
+// Cosmetic FIFA-style "overall rating" (40-99), derived from win% + avg
+// points/game. Purely a display gimmick — never persisted, never used for
+// ranking.
+export function fifaRating(p) {
+  if (!p.matchesPlayed) return 40;
+  const r = 40 + winRate(p) * 0.35 + avgPoints(p) * 2.2;
+  return Math.max(40, Math.min(99, Math.round(r)));
+}
+
 // Leaderboard order. mode 'points' → avg points/game first; mode 'winrate' →
 // win % first. Remaining keys break ties. Players with no games sort last.
 export function rankedPlayers(players, mode = 'points') {

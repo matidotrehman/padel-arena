@@ -22,8 +22,8 @@
 
 <div class="glass rounded-2xl p-3 space-y-2.5"
      style={isNext
-       ? 'border-color:rgba(198,255,50,0.5);box-shadow:0 0 22px -10px rgba(198,255,50,0.7);'
-       : done ? 'border-color:rgba(182,255,46,0.25);' : ''}>
+       ? 'border-color:rgba(16,185,129,0.5);box-shadow:0 0 22px -10px rgba(16,185,129,0.7);'
+       : done ? 'border-color:rgba(16,185,129,0.25);' : ''}>
   <div class="flex items-center justify-between gap-2">
     <div class="flex items-center gap-1.5">
       <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
@@ -42,7 +42,7 @@
       {/each}
       <input class="input text-center text-lg font-bold py-1.5 mt-1 {aWon ? 'accent-el' : ''}" type="number" min="0" inputmode="numeric"
              placeholder="0" value={round.scoreA ?? ''} oninput={(e) => set('a', e.target.value)}
-             style={aWon ? 'border-color:#c6ff32;color:#c6ff32;' : ''} />
+             style={aWon ? 'border-color:var(--color-neon-green);color:var(--color-neon-green);' : ''} />
     </div>
 
     <div class="font-display font-bold tx-faint text-xs">VS</div>

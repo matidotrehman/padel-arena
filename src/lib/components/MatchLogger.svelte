@@ -87,7 +87,7 @@
     <div class="space-y-4" in:fly={{ y: 12, duration: 200 }}>
       <!-- Teams -->
       <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-        <div class="card space-y-2" style="border-color:rgba(182,255,46,0.25);">
+        <div class="card space-y-2" style="border-color:rgba(16,185,129,0.25);">
           <div class="label !mb-0 neon-text">Team A</div>
           {#each [{ get: () => a1, set: (v) => (a1 = v) }, { get: () => a2, set: (v) => (a2 = v) }] as slot}
             <select class="input" value={slot.get()} onchange={(e) => slot.set(e.target.value)}>

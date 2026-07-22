@@ -1,17 +1,16 @@
 <script>
   import { fly, fade } from 'svelte/transition';
-  import { players, matches } from '../stores/store.js';
   import { headToHead, record, totalEncounters } from '../logic/h2h.js';
   import { winRate, avgPoints, pointDiff, form } from '../logic/stats.js';
   import Avatar from './Avatar.svelte';
 
-  let { player, onclose } = $props();
+  let { player, players, matches, onclose } = $props();
 
-  const h2h = $derived(headToHead($matches));
+  const h2h = $derived(headToHead(matches));
   const f = $derived(form(player));
 
   const rows = $derived(
-    $players
+    players
       .filter((p) => p.id !== player.id)
       .map((q) => {
         const rec = record(h2h, player.id, q.id);

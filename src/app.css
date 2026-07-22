@@ -8,13 +8,14 @@
   --color-court-800: #14141d;
   --color-court-700: #1e1e2a;
   --color-court-600: #2b2b3a;
-  --color-neon-green: #c6ff32;
-  --color-neon-lime: #e2ff5c;
+  --color-neon-green: #10b981;
+  --color-neon-lime: #34d399;
   --color-neon-yellow: #f5ff3d;
   --color-neon-cyan: #2ff0d6;
   --color-neon-violet: #a06bff;
   --color-hot: #ff5e3a;
   --color-ice: #56c8ff;
+  --color-gold: #ffd700;
 
   --font-display: 'Sora', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
@@ -52,13 +53,13 @@ html.dark {
   --surface-2: rgba(255, 255, 255, 0.014);
   --border: rgba(255, 255, 255, 0.08);
   --border-hi: rgba(255, 255, 255, 0.06);
-  --input-bg: rgba(20, 20, 29, 0.8);
-  --accent-fg: #c6ff32;
-  --grad-a: #e2ff5c;
+  --input-bg: rgba(14, 18, 27, 0.8);
+  --accent-fg: #10b981;
+  --grad-a: #34d399;
   --grad-b: #2ff0d6;
   --shadow-card: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
   --accent-adjust: none;
-  --page-solid: #08080e;
+  --page-solid: #0b0f17;
   color-scheme: dark;
 }
 
@@ -89,10 +90,10 @@ body::before {
 }
 html.dark body::before {
   background:
-    radial-gradient(900px 520px at 50% -8%, rgba(198, 255, 50, 0.13), transparent 60%),
-    radial-gradient(760px 520px at 108% 8%, rgba(47, 240, 214, 0.1), transparent 55%),
-    radial-gradient(680px 620px at -12% 92%, rgba(160, 107, 255, 0.12), transparent 55%),
-    linear-gradient(180deg, #08080e, #06060a 60%);
+    radial-gradient(900px 520px at 50% -8%, rgba(16, 185, 129, 0.14), transparent 60%),
+    radial-gradient(760px 520px at 108% 8%, rgba(47, 240, 214, 0.09), transparent 55%),
+    radial-gradient(680px 620px at -12% 92%, rgba(255, 215, 0, 0.06), transparent 55%),
+    linear-gradient(180deg, #0b0f17, #070a10 60%);
 }
 html.light body::before {
   background:
@@ -154,7 +155,7 @@ html.light body::after {
     color: var(--accent-fg);
   }
   html.dark .neon-text {
-    text-shadow: 0 0 20px rgba(198, 255, 50, 0.55);
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.55);
   }
 
   .gradient-text {
@@ -182,9 +183,9 @@ html.light body::after {
   }
 
   .btn-primary {
-    background: linear-gradient(160deg, var(--color-neon-lime), var(--color-neon-green) 55%, #9fe000);
+    background: linear-gradient(160deg, var(--color-neon-lime), var(--color-neon-green) 55%, #059669);
     color: #0a0a0b;
-    box-shadow: 0 8px 22px -8px rgba(150, 210, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 22px -8px rgba(16, 185, 129, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
   .btn-primary:hover {
     filter: brightness(1.06);

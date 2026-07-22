@@ -2,7 +2,7 @@
   import { tweened } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
 
-  let { label, value, suffix = '', icon = '', accent = '#c6ff32', animate = true } = $props();
+  let { label, value, suffix = '', icon = '', accent = '#10b981', animate = true } = $props();
 
   const display = tweened(0, { duration: 800, easing: cubicOut });
   $effect(() => {
