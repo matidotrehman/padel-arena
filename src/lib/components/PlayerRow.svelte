@@ -1,6 +1,7 @@
 <script>
   import Avatar from './Avatar.svelte';
   import { winRate, pointDiff, avgPoints, form } from '../logic/stats.js';
+  import { computeTierBadge } from '../logic/badges.js';
 
   let { player, rank, mode = 'points', badges = [], onselect } = $props();
   const wr = $derived(winRate(player));
@@ -9,6 +10,7 @@
   const f = $derived(form(player));
   const byWinrate = $derived(mode === 'winrate');
   const earned = $derived(badges.filter((b) => b.winner && b.winner.id === player.id));
+  const tier = $derived(computeTierBadge(player));
 
   const medal = $derived(rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
   const isTop = $derived(rank === 1);
@@ -64,8 +66,11 @@
     </div>
   </div>
 
-  {#if earned.length}
+  {#if tier || earned.length}
     <div class="flex flex-wrap gap-1 pl-11 relative z-10">
+      {#if tier}
+        <span class="chip !px-1.5 !py-0.5 text-[11px]" style="background:{tier.accent}22;color:{tier.accent};" title="{tier.title} tier · rating {tier.value}">{tier.icon} {tier.title}</span>
+      {/if}
       {#each earned as b (b.key)}
         <span class="chip !px-1.5 !py-0.5 text-[11px]" style="background:{b.accent}22;color:{b.accent};" title={b.title}>{b.icon} {b.title}</span>
       {/each}

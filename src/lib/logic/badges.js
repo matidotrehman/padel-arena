@@ -2,7 +2,7 @@
 // range-filtered player-stats list + match list (see stores/analytics.js) —
 // nothing here reads the lifetime store directly, so results always reflect
 // whichever timeframe the dashboard's date filter is set to.
-import { rankedPlayers, pointDiff, winRate, avgPoints } from './stats.js';
+import { rankedPlayers, pointDiff, winRate, avgPoints, fifaRating } from './stats.js';
 import { roundPlayed } from './americano.js';
 import { headToHead } from './h2h.js';
 import { fixedOutcome } from '../stores/store.js';
@@ -126,6 +126,25 @@ function idealPartner(matches, byId) {
     }
   }
   return winner ? { winner, value: `${bestValue}%` } : { winner: null };
+}
+
+// Personal performance tiers — unlike BADGE_DEFS above (one group-wide
+// winner per category), every player who has played gets exactly one tier
+// badge, judged only against their own fifaRating (win% + avg points/game).
+// This guarantees nobody with games in range shows zero badges.
+export const TIER_DEFS = [
+  { key: 'tier-diamond', title: 'Diamond', icon: '💎', accent: '#60D3FF', min: 80 },
+  { key: 'tier-gold', title: 'Gold', icon: '🏅', accent: '#FFD700', min: 65 },
+  { key: 'tier-silver', title: 'Silver', icon: '🎖️', accent: '#C0C0C0', min: 50 },
+  { key: 'tier-bronze', title: 'Bronze', icon: '🔰', accent: '#CD7F32', min: 0 },
+];
+
+// Returns null for a player with no games in range (nothing to tier yet).
+export function computeTierBadge(player) {
+  if (!player || !player.matchesPlayed) return null;
+  const rating = fifaRating(player);
+  const tier = TIER_DEFS.find((t) => rating >= t.min);
+  return { ...tier, value: rating };
 }
 
 /**
