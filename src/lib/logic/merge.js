@@ -13,6 +13,15 @@
 
 const uniq = (arr) => [...new Set(arr)];
 
+// A lastUpdated more than a day in the future can't be a real write (clock
+// skew doesn't explain years of drift) — treat it as invalid/oldest rather
+// than newest, so one bad timestamp can't permanently dominate every future
+// merge (it would otherwise "win" forever and no real edit could override it).
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+function saneTime(t) {
+  return typeof t === 'number' && Number.isFinite(t) && t > 0 && t <= Date.now() + ONE_DAY_MS ? t : 0;
+}
+
 export function mergeStates(a, b) {
   if (!a) return b || null;
   if (!b) return a;
@@ -20,7 +29,9 @@ export function mergeStates(a, b) {
   const delMatches = uniq([...(a.deletedMatchIds || []), ...(b.deletedMatchIds || [])]);
 
   // Union players by id; the more-recently-updated state wins name/colour.
-  const aNewer = (a.lastUpdated || 0) >= (b.lastUpdated || 0);
+  const aTime = saneTime(a.lastUpdated);
+  const bTime = saneTime(b.lastUpdated);
+  const aNewer = aTime >= bTime;
   const older = aNewer ? b : a;
   const newer = aNewer ? a : b;
 
@@ -53,6 +64,6 @@ export function mergeStates(a, b) {
     matches,
     deletedMatchIds: delMatches,
     deletedPlayerIds: delPlayers,
-    lastUpdated: Math.max(a.lastUpdated || 0, b.lastUpdated || 0),
+    lastUpdated: Math.max(aTime, bTime) || Date.now(),
   };
 }
