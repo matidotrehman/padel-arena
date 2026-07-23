@@ -238,12 +238,40 @@ export function applyMerged(remoteState) {
 }
 
 // ---- Bulk replace (import) / reset ----
+// Matches/players merge across devices by UNION, not by "newest wins" — a
+// match or player only disappears from the shared state if its id is
+// tombstoned. So wiping/overwriting locally isn't enough on its own: without
+// tombstoning what existed before, the next sync merge just pulls the old
+// matches/players straight back in from the cloud. Both helpers below stamp
+// tombstones for whatever the new state doesn't carry forward.
+function tombstoneRemoved(prev, next) {
+  const keptPlayerIds = new Set((next.players || []).map((p) => p.id));
+  const keptMatchIds = new Set((next.matches || []).map((m) => m.id));
+  return {
+    deletedPlayerIds: [
+      ...new Set([
+        ...(next.deletedPlayerIds || []),
+        ...(prev.players || []).map((p) => p.id).filter((id) => !keptPlayerIds.has(id)),
+      ]),
+    ],
+    deletedMatchIds: [
+      ...new Set([
+        ...(next.deletedMatchIds || []),
+        ...(prev.matches || []).map((m) => m.id).filter((id) => !keptMatchIds.has(id)),
+      ]),
+    ],
+  };
+}
+
 export function replaceState(newState) {
-  store.set({ ...newState, lastUpdated: Date.now() });
+  const prev = get(store);
+  store.set({ ...newState, ...tombstoneRemoved(prev, newState), lastUpdated: Date.now() });
 }
 
 export function resetAll() {
-  store.set(defaultState());
+  const prev = get(store);
+  const next = defaultState();
+  store.set({ ...next, ...tombstoneRemoved(prev, next) });
 }
 
 export function currentState() {
