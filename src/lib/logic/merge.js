@@ -26,8 +26,6 @@ export function mergeStates(a, b) {
   if (!a) return b || null;
   if (!b) return a;
 
-  const delMatches = uniq([...(a.deletedMatchIds || []), ...(b.deletedMatchIds || [])]);
-
   // Union players by id; the more-recently-updated state wins name/colour.
   const aTime = saneTime(a.lastUpdated);
   const bTime = saneTime(b.lastUpdated);
@@ -37,13 +35,21 @@ export function mergeStates(a, b) {
 
   // Tombstones normally union forever (a delete on one device must never be
   // resurrected by another). But an explicit re-add is also a real user
-  // action, so if the more-recently-updated side re-added a player — it's in
-  // their players list and NOT in their own deletedPlayerIds — that re-add
-  // wins over a stale tombstone still sitting on the older side.
+  // action — e.g. re-adding a deleted player, or importing a backup that
+  // brings back a match id an earlier corrupt/errant write had tombstoned.
+  // If the more-recently-updated side has the item back — present on its
+  // own list and NOT in its own tombstone list — that re-add wins over a
+  // stale tombstone still sitting on the older side.
   const newerPlayerIds = new Set((newer.players || []).map((p) => p.id));
-  const newerDeleted = new Set(newer.deletedPlayerIds || []);
+  const newerDeletedPlayers = new Set(newer.deletedPlayerIds || []);
   const delPlayers = uniq([...(a.deletedPlayerIds || []), ...(b.deletedPlayerIds || [])]).filter(
-    (id) => !(newerPlayerIds.has(id) && !newerDeleted.has(id))
+    (id) => !(newerPlayerIds.has(id) && !newerDeletedPlayers.has(id))
+  );
+
+  const newerMatchIds = new Set((newer.matches || []).map((m) => m.id));
+  const newerDeletedMatches = new Set(newer.deletedMatchIds || []);
+  const delMatches = uniq([...(a.deletedMatchIds || []), ...(b.deletedMatchIds || [])]).filter(
+    (id) => !(newerMatchIds.has(id) && !newerDeletedMatches.has(id))
   );
 
   // Union matches by id, drop tombstoned ones, keep chronological order.
