@@ -77,8 +77,8 @@
     resetPinError = '';
   }
 
-  function doReset() {
-    if (!checkPin(resetPin)) {
+  async function doReset() {
+    if (!(await checkPin(resetPin))) {
       resetPinError = 'Incorrect PIN';
       return;
     }

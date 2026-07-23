@@ -39,8 +39,8 @@
     deletePinError = '';
   }
 
-  function doDelete() {
-    if (!checkPin(deletePin)) {
+  async function doDelete() {
+    if (!(await checkPin(deletePin))) {
       deletePinError = 'Incorrect PIN';
       return;
     }
