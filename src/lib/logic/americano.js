@@ -124,9 +124,10 @@ const PENALTY = {
   DUPLICATE_MATCHUP: 1_000_000_000, // an exact {A,B} vs {C,D} game repeating
   PARTNER_CAP_EXCESS: 200_000_000, // a pair partnering more than the hard cap allows
   BACK_TO_BACK_SIT: 20_000_000, // a player benched two rounds running
-  CONSEC_PLAY_EXCESS: 15_000_000, // a player active for a 3rd+ round in a row (fatigue cap)
   BACK_TO_BACK_PARTNER: 4_000_000, // a partnership repeating in consecutive rounds
   SIT_SPREAD: 500_000, // per unit a player's sit-count is beyond the allowed +/-1 band
+  CONSEC_PLAY_EXCESS: 100_000, // a player active for a 3rd+ round in a row (fatigue cap) —
+  // below sit-spread on purpose: even rest distribution wins if the two ever conflict
   PARTNER_IMBALANCE: 40_000, // partner-count spread beyond 1, plus ghost/over-coupling
   OPPONENT_SPREAD: 8_000, // opponent-count spread beyond 1
   MAX_CONSEC_PLAY: 100, // longest unbroken run of rounds played (minor smoothness)
@@ -276,18 +277,7 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
     let bestScore = Infinity;
     let bestChoices = [];
 
-    // The greedy pass is myopic (no lookahead), so once it lets someone reach
-    // a 3rd consecutive active round, the later local-search refinement can
-    // get stuck unable to repair it — fixing a streak typically needs 2+
-    // rounds to change together, which is outside a single-round-swap
-    // neighborhood. Cheaper to simply never build the violation in the first
-    // place: whenever at least one active-set exists that keeps everyone
-    // under the cap, only consider those; fall back to the full set only if
-    // every candidate would violate it (forced by the sit-balance math).
-    const safeActiveCombos = activeCombos.filter((active) => active.every((id) => consecPlay[id] < MAX_CONSEC_ACTIVE));
-    const candidateCombos = safeActiveCombos.length ? safeActiveCombos : activeCombos;
-
-    for (const active of candidateCombos) {
+    for (const active of activeCombos) {
       const resting = ids.filter((id) => !active.includes(id));
       let mx = -Infinity;
       let mn = Infinity;
@@ -324,11 +314,11 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
           matchupRepeat * 1_000_000_000 +
           capExcess * 200_000_000 +
           consecSit * 40_000_000 +
-          consecExcess * 30_000_000 +
           consecPartner * 8_000_000 +
           partnerCost * 200_000 +
           oppCost * 50_000 +
           sitSpread * 5_000 +
+          consecExcess * 1_000 + // below sitSpread on purpose: equity wins if the two conflict
           maxStreak * 300;
 
         if (score < bestScore) {
