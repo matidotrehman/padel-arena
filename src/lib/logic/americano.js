@@ -20,6 +20,8 @@
 //     (dynamic target = R * (N-4) / N, the standard floor/ceil distribution)
 //   - nobody sits out twice in a row, and no partnership repeats twice in a
 //     row, unless mathematically unavoidable
+//   - nobody plays more than 2 consecutive rounds without a rest (ideal
+//     rhythm: Active, Active, Rest), unless mathematically unavoidable
 //   - every 2v2 matchup ({A,B} vs {C,D}) is strictly unique across all rounds
 //   - partnerships spread evenly (no "ghost pairs" at 0 while others are
 //     over-coupled at 3+)
@@ -29,6 +31,10 @@
 // `costOf`), with each tier weighted roughly an order of magnitude above the
 // maximum plausible total of every tier below it — so a higher-priority rule
 // can never be sacrificed to improve a lower-priority one.
+
+// No player may play more than this many rounds in a row without a rest —
+// the ideal rhythm is Active, Active, Rest.
+const MAX_CONSEC_ACTIVE = 2;
 
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -118,6 +124,7 @@ const PENALTY = {
   DUPLICATE_MATCHUP: 1_000_000_000, // an exact {A,B} vs {C,D} game repeating
   PARTNER_CAP_EXCESS: 200_000_000, // a pair partnering more than the hard cap allows
   BACK_TO_BACK_SIT: 20_000_000, // a player benched two rounds running
+  CONSEC_PLAY_EXCESS: 15_000_000, // a player active for a 3rd+ round in a row (fatigue cap)
   BACK_TO_BACK_PARTNER: 4_000_000, // a partnership repeating in consecutive rounds
   SIT_SPREAD: 500_000, // per unit a player's sit-count is beyond the allowed +/-1 band
   PARTNER_IMBALANCE: 40_000, // partner-count spread beyond 1, plus ghost/over-coupling
@@ -135,6 +142,7 @@ function evaluateSchedule(schedule, ids) {
   const matchupCount = {};
   const consecPlay = Object.fromEntries(ids.map((id) => [id, 0]));
   let maxConsecPlay = 0;
+  let consecPlayExcess = 0;
   let backToBackSits = 0;
   let backToBackPartners = 0;
   let lastResting = null;
@@ -165,6 +173,7 @@ function evaluateSchedule(schedule, ids) {
       if (active.has(id)) {
         consecPlay[id]++;
         if (consecPlay[id] > maxConsecPlay) maxConsecPlay = consecPlay[id];
+        if (consecPlay[id] > MAX_CONSEC_ACTIVE) consecPlayExcess++;
       } else {
         consecPlay[id] = 0;
       }
@@ -206,6 +215,7 @@ function evaluateSchedule(schedule, ids) {
     overCoupled,
     opponentSpread,
     maxConsecPlay,
+    consecPlayExcess,
   };
 }
 
@@ -234,6 +244,7 @@ function costOf(ev, partnerCap) {
     ev.duplicateMatchups * PENALTY.DUPLICATE_MATCHUP +
     capExcessCost(ev, partnerCap) * PENALTY.PARTNER_CAP_EXCESS +
     ev.backToBackSits * PENALTY.BACK_TO_BACK_SIT +
+    ev.consecPlayExcess * PENALTY.CONSEC_PLAY_EXCESS +
     ev.backToBackPartners * PENALTY.BACK_TO_BACK_PARTNER +
     sitSpreadExtra * PENALTY.SIT_SPREAD +
     partnerSpreadExtra * PENALTY.PARTNER_IMBALANCE +
@@ -265,7 +276,18 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
     let bestScore = Infinity;
     let bestChoices = [];
 
-    for (const active of activeCombos) {
+    // The greedy pass is myopic (no lookahead), so once it lets someone reach
+    // a 3rd consecutive active round, the later local-search refinement can
+    // get stuck unable to repair it — fixing a streak typically needs 2+
+    // rounds to change together, which is outside a single-round-swap
+    // neighborhood. Cheaper to simply never build the violation in the first
+    // place: whenever at least one active-set exists that keeps everyone
+    // under the cap, only consider those; fall back to the full set only if
+    // every candidate would violate it (forced by the sit-balance math).
+    const safeActiveCombos = activeCombos.filter((active) => active.every((id) => consecPlay[id] < MAX_CONSEC_ACTIVE));
+    const candidateCombos = safeActiveCombos.length ? safeActiveCombos : activeCombos;
+
+    for (const active of candidateCombos) {
       const resting = ids.filter((id) => !active.includes(id));
       let mx = -Infinity;
       let mn = Infinity;
@@ -277,7 +299,12 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
       const sitSpread = mx - mn;
       const consecSit = resting.filter((id) => lastResting.includes(id)).length;
       let maxStreak = 0;
-      for (const id of active) if (consecPlay[id] + 1 > maxStreak) maxStreak = consecPlay[id] + 1;
+      let consecExcess = 0;
+      for (const id of active) {
+        const streak = consecPlay[id] + 1;
+        if (streak > maxStreak) maxStreak = streak;
+        if (streak > MAX_CONSEC_ACTIVE) consecExcess++;
+      }
 
       for (const [teamA, teamB] of pairingsOf(active)) {
         const pkA = pairKey(...teamA);
@@ -297,6 +324,7 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
           matchupRepeat * 1_000_000_000 +
           capExcess * 200_000_000 +
           consecSit * 40_000_000 +
+          consecExcess * 30_000_000 +
           consecPartner * 8_000_000 +
           partnerCost * 200_000 +
           oppCost * 50_000 +
@@ -508,6 +536,7 @@ export function generateSchedule(playerIds, rounds = 12) {
       restCount: ev.sitCount,
       playCount: Object.fromEntries(ids.map((id) => [id, rounds - ev.sitCount[id]])),
       maxConsec: ev.maxConsecPlay,
+      consecPlayExcess: ev.consecPlayExcess,
       backToBackBench: ev.backToBackSits,
       backToBackPartner: ev.backToBackPartners,
       oppSpread: ev.opponentSpread,
