@@ -2,12 +2,15 @@
   import { fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import { players, addPlayer, renamePlayer, removePlayer, setPlayerColor, NEON_PALETTE } from '../stores/store.js';
+  import { checkPin } from '../logic/pin.js';
   import Avatar from './Avatar.svelte';
 
   let newName = $state('');
   let editingId = $state(null);
   let editName = $state('');
   let confirmDelete = $state(null);
+  let deletePin = $state('');
+  let deletePinError = $state('');
 
   function add() {
     if (!newName.trim()) return;
@@ -22,6 +25,27 @@
   function saveEdit() {
     if (editingId) renamePlayer(editingId, editName);
     editingId = null;
+  }
+
+  function openDelete(p) {
+    deletePin = '';
+    deletePinError = '';
+    confirmDelete = p;
+  }
+
+  function closeDelete() {
+    confirmDelete = null;
+    deletePin = '';
+    deletePinError = '';
+  }
+
+  function doDelete() {
+    if (!checkPin(deletePin)) {
+      deletePinError = 'Incorrect PIN';
+      return;
+    }
+    removePlayer(confirmDelete.id);
+    closeDelete();
   }
 </script>
 
@@ -52,7 +76,7 @@
               <div class="text-xs tx-faint">{p.matchesPlayed} games · {p.wins}W {p.losses}L</div>
             </div>
             <button class="tx-muted px-2" onclick={() => startEdit(p)} aria-label="Rename">✎</button>
-            <button class="tx-muted hover:text-hot px-2" onclick={() => (confirmDelete = p)} aria-label="Remove">🗑</button>
+            <button class="tx-muted hover:text-hot px-2" onclick={() => openDelete(p)} aria-label="Remove">🗑</button>
           {/if}
         </div>
         <!-- color picker -->
@@ -73,10 +97,13 @@
         <div class="text-3xl">🗑</div>
         <h3 class="font-display font-bold">Remove {confirmDelete.name}?</h3>
         <p class="text-sm tx-muted">Their lifetime stats will be deleted. Past matches stay in history.</p>
+        <input class="input text-center" type="password" inputmode="numeric" placeholder="Enter PIN" autocomplete="off"
+               bind:value={deletePin} onkeydown={(e) => e.key === 'Enter' && doDelete()} />
+        {#if deletePinError}<p class="text-sm text-hot">{deletePinError}</p>{/if}
         <div class="grid grid-cols-2 gap-2">
-          <button class="btn btn-ghost" onclick={() => (confirmDelete = null)}>Cancel</button>
+          <button class="btn btn-ghost" onclick={closeDelete}>Cancel</button>
           <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);"
-                  onclick={() => { removePlayer(confirmDelete.id); confirmDelete = null; }}>Remove</button>
+                  onclick={doDelete}>Remove</button>
         </div>
       </div>
     </div>

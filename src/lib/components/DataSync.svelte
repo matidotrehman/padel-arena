@@ -3,11 +3,14 @@
   import { exportState, parseImport } from '../logic/persistence.js';
   import { currentState, replaceState, resetAll } from '../stores/store.js';
   import { syncStatus, syncNow } from '../logic/sync.js';
+  import { checkPin } from '../logic/pin.js';
 
   let fileInput;
   let toast = $state('');
   let confirmImport = $state(null); // parsed pending state
   let confirmReset = $state(false);
+  let resetPin = $state('');
+  let resetPinError = $state('');
 
   const cloud = $derived({
     connecting: { icon: '⏳', label: 'Connecting to the group…', tone: 'var(--tx-muted)' },
@@ -62,9 +65,25 @@
     flash(`Imported ${n} players ✓`);
   }
 
-  function doReset() {
-    resetAll();
+  function openReset() {
+    resetPin = '';
+    resetPinError = '';
+    confirmReset = true;
+  }
+
+  function closeReset() {
     confirmReset = false;
+    resetPin = '';
+    resetPinError = '';
+  }
+
+  function doReset() {
+    if (!checkPin(resetPin)) {
+      resetPinError = 'Incorrect PIN';
+      return;
+    }
+    resetAll();
+    closeReset();
     flash('Reset to the 6 originals ✓');
   }
 </script>
@@ -101,7 +120,7 @@
   <input type="file" accept="application/json,.json" class="hidden" bind:this={fileInput} onchange={onFile} />
 
   <button class="btn btn-ghost w-full text-hot/90" style="border-color:rgba(255,94,58,0.3);"
-          onclick={() => (confirmReset = true)}>♻️ Reset all stats</button>
+          onclick={openReset}>♻️ Reset all stats</button>
 
   {#if toast}
     <div class="fixed bottom-24 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-2 text-sm font-medium z-50"
@@ -133,8 +152,11 @@
         <div class="text-3xl">♻️</div>
         <h3 class="font-display font-bold">Reset everything?</h3>
         <p class="text-sm tx-muted">Wipes all matches and stats back to the 6 original players. Can't be undone.</p>
+        <input class="input text-center" type="password" inputmode="numeric" placeholder="Enter PIN" autocomplete="off"
+               bind:value={resetPin} onkeydown={(e) => e.key === 'Enter' && doReset()} />
+        {#if resetPinError}<p class="text-sm text-hot">{resetPinError}</p>{/if}
         <div class="grid grid-cols-2 gap-2">
-          <button class="btn btn-ghost" onclick={() => (confirmReset = false)}>Cancel</button>
+          <button class="btn btn-ghost" onclick={closeReset}>Cancel</button>
           <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);" onclick={doReset}>Reset</button>
         </div>
       </div>
