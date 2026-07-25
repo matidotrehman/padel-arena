@@ -53,10 +53,12 @@ export function mergeStates(a, b) {
   );
 
   // Union matches by id, drop tombstoned ones, keep chronological order.
+  // Same older-then-newer precedence as players: if the same match id was
+  // edited on both sides (e.g. a score correction), the more-recently-updated
+  // state's version wins instead of whichever side merge happened to see last.
   const matchMap = new Map();
-  for (const m of [...(a.matches || []), ...(b.matches || [])]) {
-    if (m && m.id && !delMatches.includes(m.id)) matchMap.set(m.id, m);
-  }
+  for (const m of older.matches || []) if (m && m.id && !delMatches.includes(m.id)) matchMap.set(m.id, m);
+  for (const m of newer.matches || []) if (m && m.id && !delMatches.includes(m.id)) matchMap.set(m.id, m);
   const matches = [...matchMap.values()].sort((x, y) => (x.date || 0) - (y.date || 0));
 
   const playerMap = new Map();

@@ -200,6 +200,25 @@ export function mergeAmericano(rounds) {
   });
 }
 
+// ---- Edit a logged match's scores and recompute everyone's stats ----
+// patch is a partial match record (e.g. { sets }, { entries, winnerIds }, or
+// { rounds }) — teams/participants aren't editable here, only the numbers.
+export function editMatch(id, patch) {
+  update((s) => {
+    const idx = s.matches.findIndex((m) => m.id === id);
+    if (idx === -1) return s;
+    const m = { ...s.matches[idx], ...patch };
+    if (m.mode === 'fixed') {
+      const { scoreA, scoreB } = fixedOutcome(m);
+      m.scoreA = scoreA;
+      m.scoreB = scoreB;
+    }
+    s.matches[idx] = m;
+    recompute(s);
+    return s;
+  });
+}
+
 // ---- Delete a logged match and recompute everyone's stats from the rest ----
 export function deleteMatch(id) {
   update((s) => {

@@ -1,9 +1,11 @@
 <script>
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { matches, players, deleteMatch, fixedOutcome } from '../stores/store.js';
+  import { matches, players, deleteMatch, editMatch, fixedOutcome } from '../stores/store.js';
   import { sessionTotals, roundPlayed } from '../logic/americano.js';
+  import { checkPin } from '../logic/pin.js';
   import Avatar from './Avatar.svelte';
+  import RoundCard from './RoundCard.svelte';
 
   const byId = $derived(Object.fromEntries($players.map((p) => [p.id, p])));
   const name = (id) => byId[id]?.name ?? 'Removed';
@@ -52,6 +54,69 @@
 
   let confirmDel = $state(null);
   let sessionDetail = $state(null); // an americano match to show in full
+
+  // ---- Edit flow: scores only, teams/participants stay fixed ----
+  let editTarget = $state(null); // the match being edited
+  let editDraft = $state(null); // working copy of just the editable fields
+  let editPin = $state('');
+  let editPinError = $state('');
+
+  function openEdit(m) {
+    editPin = '';
+    editPinError = '';
+    if (m.mode === 'fixed') {
+      editDraft = { sets: (m.sets || []).map((s) => ({ a: String(s.a ?? ''), b: String(s.b ?? '') })) };
+    } else if (m.mode === 'individual') {
+      editDraft = {
+        entries: (m.entries || []).map((e) => ({ id: e.id, points: String(e.points ?? '') })),
+        winnerIds: [...(m.winnerIds || [])],
+      };
+    } else if (m.mode === 'americano') {
+      editDraft = { rounds: (m.rounds || []).map((r) => ({ ...r })) };
+    } else {
+      return;
+    }
+    editTarget = m;
+  }
+
+  function closeEdit() {
+    editTarget = null;
+    editDraft = null;
+    editPin = '';
+    editPinError = '';
+  }
+
+  function toggleEditWinner(id) {
+    const set = new Set(editDraft.winnerIds);
+    set.has(id) ? set.delete(id) : set.add(id);
+    editDraft.winnerIds = [...set];
+  }
+
+  function setEditRoundScore(index, a, b) {
+    editDraft.rounds[index] = { ...editDraft.rounds[index], scoreA: a, scoreB: b };
+  }
+
+  async function saveEdit() {
+    if (!(await checkPin(editPin))) {
+      editPinError = 'Incorrect PIN';
+      return;
+    }
+    if (editTarget.mode === 'fixed') {
+      editMatch(editTarget.id, {
+        sets: editDraft.sets
+          .filter((s) => s.a !== '' && s.b !== '')
+          .map((s) => ({ a: +s.a, b: +s.b })),
+      });
+    } else if (editTarget.mode === 'individual') {
+      editMatch(editTarget.id, {
+        entries: editDraft.entries.map((e) => ({ id: e.id, points: +e.points || 0 })),
+        winnerIds: editDraft.winnerIds,
+      });
+    } else if (editTarget.mode === 'americano') {
+      editMatch(editTarget.id, { rounds: editDraft.rounds });
+    }
+    closeEdit();
+  }
 </script>
 
 <div class="space-y-3">
@@ -74,7 +139,9 @@
       <div class="flex items-center gap-2">
         <span class="chip" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">{mode.icon} {mode.label}</span>
         <span class="text-xs tx-faint">{when(m.date)}</span>
-        <button class="ml-auto tx-faint hover:text-hot px-2 -mr-1 text-sm" aria-label="Delete match"
+        <button class="ml-auto tx-muted hover:text-hot px-2 text-sm" aria-label="Edit match"
+                onclick={() => openEdit(m)}>✎</button>
+        <button class="tx-faint hover:text-hot px-2 -mr-1 text-sm" aria-label="Delete match"
                 onclick={() => (confirmDel = m)}>🗑</button>
       </div>
 
@@ -196,6 +263,65 @@
         <button class="btn btn-ghost" onclick={() => (confirmDel = null)}>Cancel</button>
         <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);"
                 onclick={() => { deleteMatch(confirmDel.id); confirmDel = null; }}>Delete</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if editTarget}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/70 backdrop-blur-sm"
+       transition:fade={{ duration: 150 }}
+       onclick={(e) => { if (e.target === e.currentTarget) closeEdit(); }} role="presentation">
+    <div class="glass rounded-3xl w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+         transition:fly={{ y: 30, duration: 250 }} role="dialog" aria-modal="true" tabindex="-1">
+      <div>
+        <div class="h-display font-extrabold text-lg tx">✎ Edit match</div>
+        <div class="text-xs tx-muted">Only the scores change — teams and participants stay the same.</div>
+      </div>
+
+      {#if editTarget.mode === 'fixed'}
+        <div class="space-y-2">
+          <div class="label">Set scores</div>
+          {#each editDraft.sets as set, i}
+            <div class="flex items-center gap-2">
+              <span class="text-xs tx-faint w-10">Set {i + 1}</span>
+              <input class="input text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
+              <span class="tx-faint">—</span>
+              <input class="input text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
+            </div>
+          {/each}
+        </div>
+
+      {:else if editTarget.mode === 'individual'}
+        <div class="space-y-2">
+          {#each editDraft.entries as e (e.id)}
+            <div class="glass rounded-xl px-3 py-2.5 flex items-center gap-3">
+              <Avatar player={byId[e.id]} size={30} />
+              <span class="flex-1 truncate font-medium tx">{name(e.id)}</span>
+              <input class="input w-16 text-center py-1.5" type="number" min="0" placeholder="pts"
+                     bind:value={e.points} />
+              <button class="text-xl transition {editDraft.winnerIds.includes(e.id) ? '' : 'opacity-30 grayscale'}"
+                      onclick={() => toggleEditWinner(e.id)} aria-label="Toggle winner">🏆</button>
+            </div>
+          {/each}
+        </div>
+
+      {:else if editTarget.mode === 'americano'}
+        <div class="space-y-2">
+          {#each editDraft.rounds as round, idx}
+            <RoundCard {round} index={idx} playersById={byId} onscore={setEditRoundScore} />
+          {/each}
+        </div>
+      {/if}
+
+      <div class="space-y-2 pt-1 border-t" style="border-color:var(--border);">
+        <input class="input text-center" type="password" inputmode="numeric" placeholder="Enter PIN to save" autocomplete="off"
+               bind:value={editPin} onkeydown={(e) => e.key === 'Enter' && saveEdit()} />
+        {#if editPinError}<p class="text-sm text-hot text-center">{editPinError}</p>{/if}
+        <div class="grid grid-cols-2 gap-2">
+          <button class="btn btn-ghost" onclick={closeEdit}>Cancel</button>
+          <button class="btn btn-primary" onclick={saveEdit}>Save</button>
+        </div>
       </div>
     </div>
   </div>
