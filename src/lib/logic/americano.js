@@ -27,14 +27,32 @@
 //     over-coupled at 3+)
 //   - opponent encounters spread evenly
 //
+// Active-streak rhythm is a 3-tier hierarchy, not a single cap:
+//   1. Primary objective — nobody plays more than 2 consecutive rounds
+//      without a rest (Active, Active, Rest). This is the schedule the
+//      search always reaches for first.
+//   2. Fallback objective — if a strict 2-cap is mathematically unreachable
+//      alongside zero duplicate matchups and exact sit equity, a 3rd
+//      consecutive active round is tolerated as a last resort.
+//   3. Hard ban — a 4th (or 5th) consecutive active round is never
+//      acceptable, full stop. It's weighted above every other tier
+//      (including duplicate matchups) so the search will sacrifice anything
+//      else before letting one through.
+//
 // All of this is enforced by a single strictly-tiered cost function (see
 // `costOf`), with each tier weighted roughly an order of magnitude above the
 // maximum plausible total of every tier below it — so a higher-priority rule
 // can never be sacrificed to improve a lower-priority one.
 
-// No player may play more than this many rounds in a row without a rest —
-// the ideal rhythm is Active, Active, Rest.
+// Primary objective (Target = 2): the ideal rhythm is Active, Active, Rest.
 const MAX_CONSEC_ACTIVE = 2;
+// Fallback objective (Emergency cap = 3): tolerated only when a strict
+// max-2 streak can't be resolved alongside zero duplicates + sit equity.
+const FALLBACK_CONSEC_ACTIVE = 3;
+// Hard ban (>= 4): under no circumstances may any player play 4+ rounds in a
+// row. Any schedule reaching this is treated as effectively rejected — see
+// PENALTY.STREAK_HARD_BAN, the single highest-weighted tier in the search.
+const HARD_BAN_CONSEC_ACTIVE = 4;
 
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -121,13 +139,17 @@ export function sessionTotals(rounds, playerIds) {
 // =============================================================================
 
 const PENALTY = {
+  STREAK_HARD_BAN: 10_000_000_000, // a player active 4+ rounds in a row — an instant-reject
+  // condition, weighted above every other tier (including duplicate matchups) so the search
+  // sacrifices anything else first rather than let one through
   DUPLICATE_MATCHUP: 1_000_000_000, // an exact {A,B} vs {C,D} game repeating
   PARTNER_CAP_EXCESS: 200_000_000, // a pair partnering more than the hard cap allows
   BACK_TO_BACK_SIT: 20_000_000, // a player benched two rounds running
   BACK_TO_BACK_PARTNER: 4_000_000, // a partnership repeating in consecutive rounds
   SIT_SPREAD: 500_000, // per unit a player's sit-count is beyond the allowed +/-1 band
-  CONSEC_PLAY_EXCESS: 100_000, // a player active for a 3rd+ round in a row (fatigue cap) —
-  // below sit-spread on purpose: even rest distribution wins if the two ever conflict
+  CONSEC_PLAY_EXCESS: 100_000, // a player active for a 3rd round in a row (the tolerated
+  // fallback rhythm) — below sit-spread on purpose: even rest distribution wins if the two
+  // ever conflict
   PARTNER_IMBALANCE: 40_000, // partner-count spread beyond 1, plus ghost/over-coupling
   OPPONENT_SPREAD: 8_000, // opponent-count spread beyond 1
   MAX_CONSEC_PLAY: 100, // longest unbroken run of rounds played (minor smoothness)
@@ -143,7 +165,8 @@ function evaluateSchedule(schedule, ids) {
   const matchupCount = {};
   const consecPlay = Object.fromEntries(ids.map((id) => [id, 0]));
   let maxConsecPlay = 0;
-  let consecPlayExcess = 0;
+  let consecPlayExcess = 0; // rounds hitting exactly the tolerated 3-streak fallback
+  let hardBanStreakCount = 0; // rounds hitting the forbidden 4+ streak — should stay 0
   let backToBackSits = 0;
   let backToBackPartners = 0;
   let lastResting = null;
@@ -174,7 +197,8 @@ function evaluateSchedule(schedule, ids) {
       if (active.has(id)) {
         consecPlay[id]++;
         if (consecPlay[id] > maxConsecPlay) maxConsecPlay = consecPlay[id];
-        if (consecPlay[id] > MAX_CONSEC_ACTIVE) consecPlayExcess++;
+        if (consecPlay[id] >= HARD_BAN_CONSEC_ACTIVE) hardBanStreakCount++;
+        else if (consecPlay[id] === FALLBACK_CONSEC_ACTIVE) consecPlayExcess++;
       } else {
         consecPlay[id] = 0;
       }
@@ -217,6 +241,7 @@ function evaluateSchedule(schedule, ids) {
     opponentSpread,
     maxConsecPlay,
     consecPlayExcess,
+    hardBanStreakCount,
   };
 }
 
@@ -242,6 +267,7 @@ function costOf(ev, partnerCap) {
   const partnerSpreadExtra = Math.max(0, ev.partnerSpread - 1) + ev.overCoupled;
   const opponentSpreadExtra = Math.max(0, ev.opponentSpread - 1);
   return (
+    ev.hardBanStreakCount * PENALTY.STREAK_HARD_BAN +
     ev.duplicateMatchups * PENALTY.DUPLICATE_MATCHUP +
     capExcessCost(ev, partnerCap) * PENALTY.PARTNER_CAP_EXCESS +
     ev.backToBackSits * PENALTY.BACK_TO_BACK_SIT +
@@ -289,11 +315,13 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
       const sitSpread = mx - mn;
       const consecSit = resting.filter((id) => lastResting.includes(id)).length;
       let maxStreak = 0;
-      let consecExcess = 0;
+      let consecExcess = 0; // reaching the tolerated 3-streak fallback
+      let hardBanExcess = 0; // reaching the forbidden 4+ streak
       for (const id of active) {
         const streak = consecPlay[id] + 1;
         if (streak > maxStreak) maxStreak = streak;
-        if (streak > MAX_CONSEC_ACTIVE) consecExcess++;
+        if (streak >= HARD_BAN_CONSEC_ACTIVE) hardBanExcess++;
+        else if (streak === FALLBACK_CONSEC_ACTIVE) consecExcess++;
       }
 
       for (const [teamA, teamB] of pairingsOf(active)) {
@@ -311,6 +339,7 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
         for (const a of teamA) for (const b of teamB) oppCost += (get(opponentCount, pairKey(a, b)) + 1) ** 2;
 
         const score =
+          hardBanExcess * 10_000_000_000 + // instant-reject: never let a 4th active round in a row win
           matchupRepeat * 1_000_000_000 +
           capExcess * 200_000_000 +
           consecSit * 40_000_000 +
@@ -527,6 +556,7 @@ export function generateSchedule(playerIds, rounds = 12) {
       playCount: Object.fromEntries(ids.map((id) => [id, rounds - ev.sitCount[id]])),
       maxConsec: ev.maxConsecPlay,
       consecPlayExcess: ev.consecPlayExcess,
+      hardBanStreakCount: ev.hardBanStreakCount,
       backToBackBench: ev.backToBackSits,
       backToBackPartner: ev.backToBackPartners,
       oppSpread: ev.opponentSpread,
