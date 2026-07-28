@@ -34,5 +34,20 @@ export function computeChemistry(players, matches) {
     .sort((x, y) => y.winRate - x.winRate || y.games - x.games);
   const untested = pairs.filter((p) => !p.tested);
 
-  return { ranked, untested };
+  // "Best"/"worst" pair, with ties broken by whoever has the most games —
+  // more games at the same win rate is a stronger (more decisive) signal in
+  // either direction. All pairs tied on both win rate and games share the tag.
+  let best = [];
+  let worst = [];
+  if (ranked.length > 1) {
+    const bestRate = ranked[0].winRate;
+    const bestGames = Math.max(...ranked.filter((p) => p.winRate === bestRate).map((p) => p.games));
+    best = ranked.filter((p) => p.winRate === bestRate && p.games === bestGames);
+
+    const worstRate = ranked[ranked.length - 1].winRate;
+    const worstGames = Math.max(...ranked.filter((p) => p.winRate === worstRate).map((p) => p.games));
+    worst = worstRate === bestRate ? [] : ranked.filter((p) => p.winRate === worstRate && p.games === worstGames);
+  }
+
+  return { ranked, untested, best, worst };
 }

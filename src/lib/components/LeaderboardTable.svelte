@@ -2,13 +2,15 @@
   import { flip } from 'svelte/animate';
   import { fade } from 'svelte/transition';
   import { rangeRanked, rangeStats, filteredMatches } from '../stores/analytics.js';
+  import { players } from '../stores/store.js';
   import { rankMode } from '../stores/prefs.js';
-  import { computeBadges } from '../logic/badges.js';
+  import { computeBadges, computeTierPool } from '../logic/badges.js';
   import PlayerRow from './PlayerRow.svelte';
   import PlayerDetail from './PlayerDetail.svelte';
 
   const hasGames = $derived($rangeRanked.some((p) => p.matchesPlayed > 0));
   const badges = $derived(computeBadges($rangeStats, $filteredMatches, $rankMode));
+  const tierPool = $derived(computeTierPool($players));
   let selected = $state(null);
 </script>
 
@@ -35,7 +37,7 @@
 
   {#each $rangeRanked as player, i (player.id)}
     <div animate:flip={{ duration: 450 }}>
-      <PlayerRow {player} rank={i + 1} mode={$rankMode} {badges} onselect={(p) => (selected = p)} />
+      <PlayerRow {player} rank={i + 1} mode={$rankMode} {badges} {tierPool} onselect={(p) => (selected = p)} />
     </div>
   {/each}
 </div>

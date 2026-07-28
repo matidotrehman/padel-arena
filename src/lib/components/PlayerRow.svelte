@@ -3,14 +3,14 @@
   import { winRate, pointDiff, avgPoints, form } from '../logic/stats.js';
   import { computeTierBadge } from '../logic/badges.js';
 
-  let { player, rank, mode = 'points', badges = [], onselect } = $props();
+  let { player, rank, mode = 'points', badges = [], tierPool = [], onselect } = $props();
   const wr = $derived(winRate(player));
   const diff = $derived(pointDiff(player));
   const avg = $derived(avgPoints(player));
   const f = $derived(form(player));
   const byWinrate = $derived(mode === 'winrate');
   const earned = $derived(badges.filter((b) => b.winner && b.winner.id === player.id));
-  const tier = $derived(computeTierBadge(player));
+  const tier = $derived(computeTierBadge(player, tierPool));
 
   const medal = $derived(rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
   const isTop = $derived(rank === 1);

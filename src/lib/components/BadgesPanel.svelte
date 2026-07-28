@@ -1,16 +1,18 @@
 <script>
   import { fly } from 'svelte/transition';
   import { rangeStats, filteredMatches } from '../stores/analytics.js';
+  import { players } from '../stores/store.js';
   import { rankMode } from '../stores/prefs.js';
-  import { computeBadges, computeTierBadge } from '../logic/badges.js';
+  import { computeBadges, computeTierBadge, computeTierPool } from '../logic/badges.js';
   import { fifaRating } from '../logic/stats.js';
   import BadgeCard from './BadgeCard.svelte';
   import Avatar from './Avatar.svelte';
 
   const badges = $derived(computeBadges($rangeStats, $filteredMatches, $rankMode));
+  const tierPool = $derived(computeTierPool($players));
   const tiers = $derived(
     $rangeStats
-      .map((p) => ({ player: p, tier: computeTierBadge(p) }))
+      .map((p) => ({ player: p, tier: computeTierBadge(p, tierPool) }))
       .filter((row) => row.tier)
       .sort((a, b) => fifaRating(b.player) - fifaRating(a.player))
   );

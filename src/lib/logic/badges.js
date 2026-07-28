@@ -130,20 +130,47 @@ function idealPartner(matches, byId) {
 
 // Personal performance tiers — unlike BADGE_DEFS above (one group-wide
 // winner per category), every player who has played gets exactly one tier
-// badge, judged only against their own fifaRating (win% + avg points/game).
-// This guarantees nobody with games in range shows zero badges.
+// badge. Tiers are ranked by percentile against the all-time player pool
+// (see computeTierPool), not by a fixed absolute rating — otherwise a group
+// that's simply playing well pushes everyone into Gold/Diamond at once, and
+// a weak group never sees a Bronze.
 export const TIER_DEFS = [
-  { key: 'tier-diamond', title: 'Diamond', icon: '💎', accent: '#60D3FF', min: 80 },
-  { key: 'tier-gold', title: 'Gold', icon: '🏅', accent: '#FFD700', min: 65 },
-  { key: 'tier-silver', title: 'Silver', icon: '🎖️', accent: '#C0C0C0', min: 50 },
-  { key: 'tier-bronze', title: 'Bronze', icon: '🔰', accent: '#CD7F32', min: 0 },
+  { key: 'tier-diamond', title: 'Diamond', icon: '💎', accent: '#60D3FF' },
+  { key: 'tier-gold', title: 'Gold', icon: '🏅', accent: '#FFD700' },
+  { key: 'tier-silver', title: 'Silver', icon: '🎖️', accent: '#C0C0C0' },
+  { key: 'tier-bronze', title: 'Bronze', icon: '🔰', accent: '#CD7F32' },
 ];
 
+// Sorted ratings for every all-time player who has ever played a game (not
+// date-range-filtered — tiers should stay stable regardless of which
+// timeframe is on screen). Pass this pool into computeTierBadge.
+export function computeTierPool(allTimePlayers) {
+  return (allTimePlayers || [])
+    .filter((p) => p && p.matchesPlayed > 0)
+    .map((p) => fifaRating(p))
+    .sort((a, b) => a - b);
+}
+
 // Returns null for a player with no games in range (nothing to tier yet).
-export function computeTierBadge(player) {
+//
+// Tier is decided by percentile rank within `pool`, not by comparing the
+// rating against a derived cutoff value — with a small pool, two adjacent
+// percentiles (e.g. 80th and 50th) can land on the same underlying rating
+// and collapse Gold into Diamond. Ranking directly avoids that collision:
+// top 20% of the pool is Diamond, next 30% Gold, next 30% Silver, bottom
+// 20% Bronze. Ties share a percentile (and so the same tier).
+export function computeTierBadge(player, pool = []) {
   if (!player || !player.matchesPlayed) return null;
   const rating = fifaRating(player);
-  const tier = TIER_DEFS.find((t) => rating >= t.min);
+  const n = pool.length;
+  let percentile = 1;
+  if (n) {
+    const below = pool.filter((r) => r < rating).length;
+    const atOrBelow = pool.filter((r) => r <= rating).length;
+    percentile = (below + atOrBelow) / (2 * n);
+  }
+  const key = percentile >= 0.8 ? 'tier-diamond' : percentile >= 0.5 ? 'tier-gold' : percentile >= 0.2 ? 'tier-silver' : 'tier-bronze';
+  const tier = TIER_DEFS.find((t) => t.key === key);
   return { ...tier, value: rating };
 }
 
