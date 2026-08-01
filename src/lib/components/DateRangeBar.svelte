@@ -3,9 +3,9 @@
   import { dateFilter, setMode, setCustomRange } from '../stores/dateFilter.js';
 
   const OPTIONS = [
+    { mode: 'allTime', label: 'All Time' },
     { mode: 'thisMonth', label: 'This Month' },
     { mode: 'lastMonth', label: 'Last Month' },
-    { mode: 'allTime', label: 'All Time' },
     { mode: 'custom', label: 'Custom' },
   ];
 

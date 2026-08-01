@@ -7,15 +7,15 @@ const KEY = 'padel_datefilter';
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { mode: 'thisMonth', customStart: '', customEnd: '' };
+    if (!raw) return { mode: 'allTime', customStart: '', customEnd: '' };
     const parsed = JSON.parse(raw);
     return {
-      mode: ['thisMonth', 'lastMonth', 'allTime', 'custom'].includes(parsed.mode) ? parsed.mode : 'thisMonth',
+      mode: ['thisMonth', 'lastMonth', 'allTime', 'custom'].includes(parsed.mode) ? parsed.mode : 'allTime',
       customStart: parsed.customStart || '',
       customEnd: parsed.customEnd || '',
     };
   } catch {
-    return { mode: 'thisMonth', customStart: '', customEnd: '' };
+    return { mode: 'allTime', customStart: '', customEnd: '' };
   }
 }
 
