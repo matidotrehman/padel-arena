@@ -159,10 +159,20 @@ export function removePlayer(id) {
   });
 }
 
+export const ANIMAL_ICONS = ['🦁', '🦅', '🐺', '🐆', '🦈', '🦍', '🐉', '🦊', '🐍', '🐂', '⚡', '👑'];
+
 export function setPlayerColor(id, color) {
   update((s) => {
     const p = s.players.find((x) => x.id === id);
     if (p) p.avatarColor = color;
+    return s;
+  });
+}
+
+export function setPlayerIcon(id, icon) {
+  update((s) => {
+    const p = s.players.find((x) => x.id === id);
+    if (p) p.avatarIcon = icon;
     return s;
   });
 }

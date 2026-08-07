@@ -8,8 +8,7 @@
   import MatchLogger from './lib/components/MatchLogger.svelte';
   import AmericanoMixer from './lib/components/AmericanoMixer.svelte';
   import BadgesPanel from './lib/components/BadgesPanel.svelte';
-  import ChemistryMatrix from './lib/components/ChemistryMatrix.svelte';
-  import HeadToHeadCompare from './lib/components/HeadToHeadCompare.svelte';
+  import AnalyticsHub from './lib/components/AnalyticsHub.svelte';
   import MatchHistory from './lib/components/MatchHistory.svelte';
   import DataSync from './lib/components/DataSync.svelte';
   import PlayersManager from './lib/components/PlayersManager.svelte';
@@ -34,7 +33,7 @@
     log: 'Log a Match',
     americano: 'Americano Mixer',
     badges: 'Badges',
-    chemistry: 'Chemistry',
+    chemistry: 'Analytics & Chem',
     history: 'Match History',
     manage: 'Manage',
   };
@@ -98,10 +97,7 @@
       {:else if active === 'badges'}
         <BadgesPanel />
       {:else if active === 'chemistry'}
-        <div class="space-y-6">
-          <ChemistryMatrix />
-          <HeadToHeadCompare />
-        </div>
+        <AnalyticsHub />
       {:else if active === 'history'}
         <MatchHistory />
       {:else if active === 'manage'}

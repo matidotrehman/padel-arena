@@ -15,6 +15,7 @@ const NEON_PALETTE = [
 ];
 
 const SEED_NAMES = ['Ahmed', 'Mati', 'Hamza', 'Tayyab', 'Ali', 'Jan'];
+const DEFAULT_ANIMALS = ['🦁', '🦅', '🐺', '🐆', '🦈', '🦍'];
 
 let idCounter = 0;
 export function makeId(prefix = 'id') {
@@ -22,9 +23,6 @@ export function makeId(prefix = 'id') {
   return `${prefix}_${Date.now().toString(36)}_${idCounter}`;
 }
 
-// Player identity is derived from the name so it is the SAME on every device.
-// This lets the shared-sync merge dedupe players (otherwise each phone would
-// mint its own random id for "Ahmed" and the union would show duplicates).
 export function playerId(name) {
   const slug = String(name || '')
     .trim()
@@ -39,6 +37,7 @@ export function makePlayer(name, colorIndex = 0) {
     id: playerId(name),
     name,
     avatarColor: NEON_PALETTE[colorIndex % NEON_PALETTE.length],
+    avatarIcon: DEFAULT_ANIMALS[colorIndex % DEFAULT_ANIMALS.length],
     matchesPlayed: 0,
     wins: 0,
     losses: 0,
@@ -101,7 +100,10 @@ function reconcile(raw) {
   const base = defaultState();
   if (!raw || typeof raw !== 'object') return base;
   const players = Array.isArray(raw.players)
-    ? raw.players.map((p, i) => ({ ...makePlayer(p.name ?? `Player ${i + 1}`, i), ...p }))
+    ? raw.players.map((p, i) => {
+        const baseP = makePlayer(p.name ?? `Player ${i + 1}`, i);
+        return { ...baseP, ...p, avatarIcon: p.avatarIcon || baseP.avatarIcon };
+      })
     : base.players;
   return migrateState({
     version: SCHEMA_VERSION,

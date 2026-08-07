@@ -7,6 +7,7 @@
   import { fifaRating } from '../logic/stats.js';
   import BadgeCard from './BadgeCard.svelte';
   import Avatar from './Avatar.svelte';
+  import AchievementsPanel from './AchievementsPanel.svelte';
 
   const badges = $derived(computeBadges($rangeStats, $filteredMatches, $rankMode));
   const tierPool = $derived(computeTierPool($players));
@@ -49,4 +50,6 @@
       {/each}
     </div>
   {/if}
+
+  <AchievementsPanel />
 </div>

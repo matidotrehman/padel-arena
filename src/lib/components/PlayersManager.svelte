@@ -1,7 +1,7 @@
 <script>
   import { fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { players, addPlayer, renamePlayer, removePlayer, setPlayerColor, NEON_PALETTE } from '../stores/store.js';
+  import { players, addPlayer, renamePlayer, removePlayer, setPlayerColor, setPlayerIcon, ANIMAL_ICONS, NEON_PALETTE } from '../stores/store.js';
   import { checkPin } from '../logic/pin.js';
   import Avatar from './Avatar.svelte';
 
@@ -79,13 +79,28 @@
             <button class="tx-muted hover:text-hot px-2" onclick={() => openDelete(p)} aria-label="Remove">🗑</button>
           {/if}
         </div>
-        <!-- color picker -->
-        <div class="flex gap-1.5 pl-12">
-          {#each NEON_PALETTE as c}
-            <button class="w-5 h-5 rounded-full transition" aria-label="color"
-                    style="background:{c};{p.avatarColor === c ? 'outline:2px solid white;outline-offset:1px;' : 'opacity:0.5;'}"
-                    onclick={() => setPlayerColor(p.id, c)}></button>
-          {/each}
+        <!-- Icon & Color pickers -->
+        <div class="space-y-1.5 pl-12 pt-1 border-t border-white/5">
+          <div class="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
+            <span class="text-[9px] tx-faint font-bold uppercase mr-1 shrink-0">Icon:</span>
+            {#each ANIMAL_ICONS as ico}
+              <button
+                class="w-6 h-6 rounded-lg text-xs grid place-items-center transition shrink-0 glass {p.avatarIcon === ico ? 'ring-1 ring-emerald-400 bg-emerald-500/20 scale-105' : 'opacity-50 hover:opacity-100'}"
+                aria-label="select icon {ico}"
+                onclick={() => setPlayerIcon(p.id, ico)}
+              >
+                {ico}
+              </button>
+            {/each}
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[9px] tx-faint font-bold uppercase mr-1 shrink-0">Color:</span>
+            {#each NEON_PALETTE as c}
+              <button class="w-4 h-4 rounded-full transition" aria-label="color"
+                      style="background:{c};{p.avatarColor === c ? 'outline:2px solid white;outline-offset:1px;' : 'opacity:0.5;'}"
+                      onclick={() => setPlayerColor(p.id, c)}></button>
+            {/each}
+          </div>
         </div>
       </div>
     {/each}
