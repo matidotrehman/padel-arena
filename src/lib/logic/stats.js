@@ -36,10 +36,17 @@ export function avgConceded(p) {
   return +(p.pointsConceded / p.matchesPlayed).toFixed(1);
 }
 
-// Average points scored per game — the Americano ranking metric.
-export function avgPoints(p) {
+// Average points scored per game, unrounded — the real Americano ranking
+// metric. Use this (not avgPoints) for sorting and derived scores, so
+// players who round to the same display value don't get falsely tied.
+export function avgPointsRaw(p) {
   if (!p.matchesPlayed) return 0;
-  return +(p.pointsWon / p.matchesPlayed).toFixed(1);
+  return p.pointsWon / p.matchesPlayed;
+}
+
+// Display-rounded average points scored per game.
+export function avgPoints(p) {
+  return +avgPointsRaw(p).toFixed(1);
 }
 
 // Cosmetic FIFA-style "overall rating" (40-99), derived from win% + avg
@@ -47,14 +54,14 @@ export function avgPoints(p) {
 // ranking.
 export function fifaRating(p) {
   if (!p.matchesPlayed) return 40;
-  const r = 40 + winRate(p) * 0.35 + avgPoints(p) * 2.2;
+  const r = 40 + winRate(p) * 0.35 + avgPointsRaw(p) * 2.2;
   return Math.max(40, Math.min(99, Math.round(r)));
 }
 
 // Leaderboard order. mode 'points' → avg points/game first; mode 'winrate' →
 // win % first. Remaining keys break ties. Players with no games sort last.
 export function rankedPlayers(players, mode = 'points') {
-  const keys = mode === 'winrate' ? [winRate, pointDiff, avgPoints] : [avgPoints, winRate, pointDiff];
+  const keys = mode === 'winrate' ? [winRate, pointDiff, avgPointsRaw] : [avgPointsRaw, winRate, pointDiff];
   return [...players].sort((a, b) => {
     for (const k of keys) {
       const d = k(b) - k(a);
