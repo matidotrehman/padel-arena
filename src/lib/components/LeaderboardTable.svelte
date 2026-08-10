@@ -16,18 +16,25 @@
 
 <div class="space-y-2.5">
   <!-- Ranking mode switch -->
-  <div class="rounded-2xl p-1 grid grid-cols-2 gap-1" style="background:var(--surface-1);border:1px solid var(--border);">
-    <button
-      class="btn !py-2 text-sm {$rankMode === 'points' ? 'btn-primary' : 'tx-muted'}"
-      onclick={() => rankMode.set('points')}>⚡ Points</button>
-    <button
-      class="btn !py-2 text-sm {$rankMode === 'winrate' ? 'btn-primary' : 'tx-muted'}"
-      onclick={() => rankMode.set('winrate')}>📊 Win %</button>
+  <div class="flex items-center justify-end gap-2 px-0.5">
+    <span class="text-[10px] uppercase tracking-[0.12em] tx-faint font-bold">Rank by</span>
+    <div class="relative inline-flex rounded-md p-0.5" style="background:var(--surface-1);border:1px solid var(--border);">
+      <div class="absolute top-0.5 bottom-0.5 rounded transition-transform duration-200 ease-out"
+           style="width:calc(50% - 2px);
+                  left:2px;
+                  transform:translateX({$rankMode === 'winrate' ? '100%' : '0'});
+                  background:var(--accent-bright);"></div>
+      <button
+        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode === 'points' ? 'text-white' : 'tx-muted'}"
+        onclick={() => rankMode.set('points')}>Points</button>
+      <button
+        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode === 'winrate' ? 'text-white' : 'tx-muted'}"
+        onclick={() => rankMode.set('winrate')}>Win %</button>
+    </div>
   </div>
 
   {#if !hasGames}
-    <div class="rounded-2xl text-center py-8 tx-muted" style="background:var(--surface-1);border:1px solid var(--border);" in:fade>
-      <div class="text-4xl mb-2">🎾</div>
+    <div class="rounded-lg text-center py-8 tx-muted" style="background:var(--surface-1);border:1px solid var(--border);" in:fade>
       <p class="font-semibold tx">No matches in this timeframe</p>
       <p class="text-sm">Try a different date range, or log a game / run an Americano.</p>
     </div>
