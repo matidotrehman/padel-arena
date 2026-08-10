@@ -14,7 +14,7 @@
   let selected = $state(null);
 </script>
 
-<div class="space-y-2.5">
+<div class="space-y-3">
   <!-- Ranking mode switch -->
   <div class="flex items-center justify-end gap-2 px-0.5">
     <span class="text-[10px] uppercase tracking-[0.12em] tx-faint font-bold">Rank by</span>

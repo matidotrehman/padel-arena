@@ -24,9 +24,13 @@
     {#each tabs as t}
       {@const on = active === t.id}
       {@const Icon = t.icon}
-      <button class="relative flex flex-col items-center gap-1 py-1.5 rounded-lg transition-colors duration-150"
+      <button class="relative flex flex-col items-center gap-1 py-1.5 rounded-lg transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-fg)]"
               onclick={() => (active = t.id)}
-              style={on ? 'color:var(--accent-fg);' : 'color:var(--tx-faint);'}>
+              style="
+                border:none;
+                background:{on ? 'rgba(0,255,135,0.1)' : 'transparent'};
+                color:{on ? 'var(--accent-fg)' : 'var(--tx-faint)'};
+              ">
         <Icon size={18} strokeWidth={2} />
         <span class="text-[9px] font-semibold tracking-wide truncate max-w-full">{t.label}</span>
       </button>
