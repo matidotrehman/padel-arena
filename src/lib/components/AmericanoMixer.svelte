@@ -115,7 +115,7 @@
         <span class="neon-text">{minutes} min · {rounds} rounds</span>
       </div>
       <input type="range" min="60" max="210" step="15" bind:value={minutes}
-             class="w-full accent-[color:var(--color-neon-green)]" />
+             class="w-full accent-[color:var(--accent-fg)]" />
       <div class="flex justify-between text-[10px] tx-faint"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
     </div>
 
@@ -136,7 +136,7 @@
       <button class="btn btn-ghost text-sm" onclick={() => (showFinalize = true)}>Finish ▸</button>
     </div>
     <div class="h-1.5 rounded-full overflow-hidden" style="background:color-mix(in srgb, var(--tx) 12%, transparent);">
-      <div class="h-full bg-[color:var(--color-neon-green)] transition-all duration-500"
+      <div class="h-full bg-[color:var(--accent-fg)] transition-all duration-500"
            style="width:{totalRounds ? (playedCount / totalRounds) * 100 : 0}%"></div>
     </div>
 

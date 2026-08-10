@@ -94,7 +94,7 @@
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
         <linearGradient id="p1-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="var(--color-neon-green)" stop-opacity="0.45" />
+          <stop offset="0%" stop-color="var(--accent-fg)" stop-opacity="0.45" />
           <stop offset="100%" stop-color="#22e0c8" stop-opacity="0.25" />
         </linearGradient>
       </defs>
@@ -160,7 +160,7 @@
         <path
           d={getPolygonPath(metrics1)}
           fill="url(#p1-grad)"
-          stroke="var(--color-neon-green, #b6ff2e)"
+          stroke="var(--accent-fg)"
           stroke-width="2.5"
           stroke-linejoin="round"
           filter="url(#radar-glow-p1)"
@@ -171,7 +171,7 @@
             cx={pt.x}
             cy={pt.y}
             r="4"
-            fill="var(--color-neon-green, #b6ff2e)"
+            fill="var(--accent-fg)"
             stroke="#0f172a"
             stroke-width="1.5"
           />

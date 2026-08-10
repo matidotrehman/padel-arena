@@ -133,9 +133,15 @@
     </div>
   {/if}
 
-  {#each list as m, i (m.id)}
+  <div class="relative pl-1.5 space-y-3">
+    {#if list.length}
+      <div class="absolute left-[9px] top-3 bottom-3 w-px" style="background:color-mix(in srgb, var(--accent-fg) 28%, transparent);"></div>
+    {/if}
+    {#each list as m, i (m.id)}
     {@const mode = MODES[m.mode] || { icon: '🎾', label: m.mode }}
-    <div class="card space-y-2.5" animate:flip={{ duration: 300 }} in:fly={{ y: 12, duration: 200, delay: Math.min(i, 6) * 30 }}>
+    <div class="relative pl-6" animate:flip={{ duration: 300 }} in:fly={{ y: 12, duration: 200, delay: Math.min(i, 6) * 30 }}>
+      <span class="absolute left-[5px] top-4 w-2.5 h-2.5 rounded-full z-10" style="background:var(--accent-fg);box-shadow:0 0 0 3px var(--page-solid), 0 0 8px -1px var(--accent-fg);"></span>
+      <div class="card space-y-2.5">
       <div class="flex items-center gap-2">
         <span class="chip" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">{mode.icon} {mode.label}</span>
         <span class="text-xs tx-faint">{when(m.date)}</span>
@@ -197,8 +203,10 @@
           {/if}
         </button>
       {/if}
+      </div>
     </div>
-  {/each}
+    {/each}
+  </div>
 </div>
 
 {#if sessionDetail}

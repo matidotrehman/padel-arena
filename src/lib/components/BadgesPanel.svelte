@@ -26,8 +26,8 @@
   </div>
   <div class="grid grid-cols-2 gap-3 items-stretch">
     {#each badges as badge, i}
-      <div class="h-full" in:fly={{ y: 16, delay: i * 60, duration: 260 }}>
-        <BadgeCard {badge} />
+      <div class={i === 0 ? 'col-span-2' : ''} in:fly={{ y: 16, delay: i * 60, duration: 260 }}>
+        <BadgeCard {badge} hero={i === 0} />
       </div>
     {/each}
   </div>

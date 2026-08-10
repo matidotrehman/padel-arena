@@ -109,17 +109,21 @@ body::after {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-size: 46px 46px;
+  background-repeat: repeat, repeat, no-repeat;
+  background-size: 46px 46px, 46px 46px, 300px 510px;
+  background-position: 0 0, 0 0, right -60px bottom -90px;
 }
 html.dark body::after {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 340'%3E%3Crect x='10' y='10' width='180' height='320' rx='4' fill='none' stroke='rgba(16,185,129,0.16)' stroke-width='2'/%3E%3Cline x1='10' y1='170' x2='190' y2='170' stroke='rgba(47,240,214,0.22)' stroke-width='3'/%3E%3Cline x1='10' y1='110' x2='190' y2='110' stroke='rgba(16,185,129,0.14)' stroke-width='1.5'/%3E%3Cline x1='10' y1='230' x2='190' y2='230' stroke='rgba(16,185,129,0.14)' stroke-width='1.5'/%3E%3Cline x1='100' y1='110' x2='100' y2='170' stroke='rgba(16,185,129,0.14)' stroke-width='1.5'/%3E%3Cline x1='100' y1='170' x2='100' y2='230' stroke='rgba(16,185,129,0.14)' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 html.light body::after {
   background-image:
     linear-gradient(rgba(20, 30, 50, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 30, 50, 0.03) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(20, 30, 50, 0.03) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 340'%3E%3Crect x='10' y='10' width='180' height='320' rx='4' fill='none' stroke='rgba(63,125,0,0.12)' stroke-width='2'/%3E%3Cline x1='10' y1='170' x2='190' y2='170' stroke='rgba(0,165,140,0.18)' stroke-width='3'/%3E%3Cline x1='10' y1='110' x2='190' y2='110' stroke='rgba(63,125,0,0.1)' stroke-width='1.5'/%3E%3Cline x1='10' y1='230' x2='190' y2='230' stroke='rgba(63,125,0,0.1)' stroke-width='1.5'/%3E%3Cline x1='100' y1='110' x2='100' y2='170' stroke='rgba(63,125,0,0.1)' stroke-width='1.5'/%3E%3Cline x1='100' y1='170' x2='100' y2='230' stroke='rgba(63,125,0,0.1)' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 *,
@@ -183,9 +187,9 @@ html.light body::after {
   }
 
   .btn-primary {
-    background: linear-gradient(160deg, var(--color-neon-lime), var(--color-neon-green) 55%, #059669);
+    background: linear-gradient(160deg, var(--btn-a, var(--color-neon-lime)), var(--btn-b, var(--color-neon-green)) 55%, var(--btn-c, #059669));
     color: #0a0a0b;
-    box-shadow: 0 8px 22px -8px rgba(16, 185, 129, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--btn-b, var(--color-neon-green)) 65%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
   .btn-primary:hover {
     filter: brightness(1.06);
@@ -233,13 +237,13 @@ html.light body::after {
   }
 }
 
-/* Range slider — neon track */
+/* Range slider — accent track, follows the active section's color */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-neon-green), var(--color-neon-cyan));
+  background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
   outline: none;
 }
 input[type='range']::-webkit-slider-thumb {
@@ -249,8 +253,59 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   background: #fff;
   border: 1px solid var(--border);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-neon-green) 28%, transparent), 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-fg) 28%, transparent), 0 2px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
+}
+
+/* ---- Per-section color identity ----
+   Each tab recolors accent-fg/gradient/button vars so the app doesn't read as
+   one monochrome green skin — color is the fastest way to tell screens apart. */
+[data-tab='log'] {
+  --accent-fg: var(--color-hot);
+  --grad-a: #ff8a6a;
+  --grad-b: var(--color-hot);
+  --btn-a: #ff8a6a;
+  --btn-b: var(--color-hot);
+  --btn-c: #c93f1e;
+}
+[data-tab='americano'] {
+  --accent-fg: var(--color-neon-violet);
+  --grad-a: #c3a6ff;
+  --grad-b: var(--color-neon-violet);
+  --btn-a: #c3a6ff;
+  --btn-b: var(--color-neon-violet);
+  --btn-c: #6a3fd6;
+}
+[data-tab='badges'] {
+  --accent-fg: var(--color-gold);
+  --grad-a: #ffe066;
+  --grad-b: var(--color-gold);
+  --btn-a: #ffe066;
+  --btn-b: var(--color-gold);
+  --btn-c: #b8860b;
+}
+[data-tab='chemistry'] {
+  --accent-fg: var(--color-neon-cyan);
+  --grad-a: var(--color-neon-cyan);
+  --grad-b: var(--color-ice);
+  --btn-a: var(--color-neon-cyan);
+  --btn-b: var(--color-ice);
+  --btn-c: #1c7fb8;
+}
+[data-tab='history'] {
+  --accent-fg: var(--color-ice);
+  --grad-a: var(--color-ice);
+  --grad-b: #7c9bff;
+  --btn-a: var(--color-ice);
+  --btn-b: #7c9bff;
+  --btn-c: #3f5fc9;
+}
+html.light [data-tab='log'],
+html.light [data-tab='americano'],
+html.light [data-tab='badges'],
+html.light [data-tab='chemistry'],
+html.light [data-tab='history'] {
+  --accent-fg: color-mix(in srgb, var(--grad-b) 78%, black 15%);
 }
 
 /* Number stepper — hide native spinners */

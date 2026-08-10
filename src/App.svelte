@@ -82,7 +82,7 @@
 
   <!-- Tab content -->
   {#key active}
-    <main in:fly={{ y: 14, duration: 220 }}>
+    <main data-tab={active} in:fly={{ y: 14, duration: 220 }}>
       {#if active === 'leaderboard'}
         <div class="grid grid-cols-3 gap-2.5 mb-4">
           <StatCard label="Games" value={totalGames} icon="🎾" />

@@ -56,7 +56,7 @@
       <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden p-0.5">
         <div
           class="h-full rounded-full transition-all duration-500"
-          style="width:{stats.pct}%;background:linear-gradient(90deg, var(--color-neon-green, #b6ff2e), #22e0c8);"
+          style="width:{stats.pct}%;background:linear-gradient(90deg, var(--grad-a), var(--grad-b));"
         ></div>
       </div>
     </div>

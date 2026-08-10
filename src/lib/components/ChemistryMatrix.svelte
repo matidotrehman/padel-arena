@@ -32,7 +32,7 @@
             <div class="text-[11px] tx-faint mono">{p.wins}W {p.losses}L · {p.games} games</div>
           </div>
           {#if chem.best.includes(p)}
-            <span class="chip" style="background:color-mix(in srgb, var(--color-neon-green) 16%, transparent);color:var(--color-neon-green);">🔥 Unstoppable</span>
+            <span class="chip" style="background:color-mix(in srgb, var(--accent-fg) 16%, transparent);color:var(--accent-fg);">🔥 Unstoppable</span>
           {:else if chem.worst.includes(p)}
             <span class="chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;">🧊 Toxic</span>
           {/if}

@@ -22,12 +22,12 @@
 
 <div class="glass rounded-2xl p-3 space-y-2.5"
      style={isNext
-       ? 'border-color:rgba(16,185,129,0.5);box-shadow:0 0 22px -10px rgba(16,185,129,0.7);'
-       : done ? 'border-color:rgba(16,185,129,0.25);' : ''}>
+       ? 'border-color:color-mix(in srgb, var(--accent-fg) 50%, transparent);box-shadow:0 0 22px -10px color-mix(in srgb, var(--accent-fg) 70%, transparent);'
+       : done ? 'border-color:color-mix(in srgb, var(--accent-fg) 25%, transparent);' : ''}>
   <div class="flex items-center justify-between gap-2">
     <div class="flex items-center gap-1.5">
       <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
-      {#if isNext}<span class="chip neon-text" style="background:color-mix(in srgb, var(--color-neon-green) 16%, transparent);">▶ Up next</span>{/if}
+      {#if isNext}<span class="chip neon-text" style="background:color-mix(in srgb, var(--accent-fg) 16%, transparent);">▶ Up next</span>{/if}
     </div>
     {#if resting.length}
       <span class="text-[11px] tx-faint truncate">😴 {resting.map((p) => p.name).join(', ')}</span>
@@ -42,7 +42,7 @@
       {/each}
       <input class="input text-center text-lg font-bold py-1.5 mt-1 {aWon ? 'accent-el' : ''}" type="number" min="0" inputmode="numeric"
              placeholder="0" value={round.scoreA ?? ''} oninput={(e) => set('a', e.target.value)}
-             style={aWon ? 'border-color:var(--color-neon-green);color:var(--color-neon-green);' : ''} />
+             style={aWon ? 'border-color:var(--accent-fg);color:var(--accent-fg);' : ''} />
     </div>
 
     <div class="font-display font-bold tx-faint text-xs">VS</div>
@@ -54,7 +54,7 @@
       {/each}
       <input class="input text-center text-lg font-bold py-1.5 mt-1 {bWon ? 'accent-el' : ''}" type="number" min="0" inputmode="numeric"
              placeholder="0" value={round.scoreB ?? ''} oninput={(e) => set('b', e.target.value)}
-             style={bWon ? 'border-color:#2ff0d6;color:#2ff0d6;' : ''} />
+             style={bWon ? 'border-color:var(--grad-b);color:var(--grad-b);' : ''} />
     </div>
   </div>
 </div>
