@@ -1,31 +1,28 @@
 <script>
   let { player, size = 40 } = $props();
 
-  const initials = $derived(
-    (player?.name || '?')
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase()
-  );
+  const DEFAULT_ICONS = ['🦁', '🦅', '🐺', '🐆', '🦈', '🦍', '🐉', '🦊', '🐍', '🐂', '⚡', '👑'];
 
-  const icon = $derived(player?.avatarIcon || null);
+  function getDefaultIcon(p) {
+    if (!p) return '🦁';
+    const str = p.id || p.name || 'x';
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = (hash << 5) - hash + str.charCodeAt(i);
+    return DEFAULT_ICONS[Math.abs(hash) % DEFAULT_ICONS.length];
+  }
+
+  const color = $derived(player?.avatarColor || '#10B981');
+  const icon = $derived(player?.avatarIcon || getDefaultIcon(player));
 </script>
 
 <div
-  class="flex items-center justify-center rounded-full font-bold shrink-0 relative select-none"
+  class="flex items-center justify-center rounded-full shrink-0 relative select-none"
   style="
     width:{size}px;height:{size}px;
-    font-size:{icon ? size * 0.5 : size * 0.36}px;
-    color:{player?.avatarColor || 'var(--tx-muted)'};
-    background:var(--page-solid);
-    border:1px solid var(--border);
+    font-size:{size * 0.5}px;
+    background:radial-gradient(circle at 35% 30%, {color}30, var(--surface-1) 72%);
+    border:1.5px solid {color}80;
   "
 >
-  {#if icon}
-    <span class="leading-none">{icon}</span>
-  {:else}
-    <span>{initials}</span>
-  {/if}
+  <span class="leading-none">{icon}</span>
 </div>

@@ -28,7 +28,8 @@
                 background:var(--accent-bright);"></div>
     {#each OPTIONS as o}
       <button
-        class="relative z-10 py-1.5 px-1 text-[11px] font-semibold rounded-md transition-colors {$dateFilter.mode === o.mode ? 'text-white' : 'tx-muted'}"
+        class="relative z-10 py-1.5 px-1 text-[11px] font-semibold rounded-md transition-colors {$dateFilter.mode !== o.mode ? 'tx-muted' : ''}"
+        style={$dateFilter.mode === o.mode ? 'color:var(--accent-on);' : ''}
         onclick={() => setMode(o.mode)}>{o.label}</button>
     {/each}
   </div>

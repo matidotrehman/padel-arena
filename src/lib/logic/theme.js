@@ -1,11 +1,11 @@
-// Light/dark theme, persisted per device. Default: light (courtside daylight).
+// Light/dark theme, persisted per device. Default: dark (premium night-court look).
 const KEY = 'padel_theme';
 
 export function initialTheme() {
   try {
-    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+    return localStorage.getItem(KEY) === 'light' ? 'light' : 'dark';
   } catch {
-    return 'light';
+    return 'dark';
   }
 }
 

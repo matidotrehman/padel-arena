@@ -25,10 +25,12 @@
                   transform:translateX({$rankMode === 'winrate' ? '100%' : '0'});
                   background:var(--accent-bright);"></div>
       <button
-        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode === 'points' ? 'text-white' : 'tx-muted'}"
+        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode !== 'points' ? 'tx-muted' : ''}"
+        style={$rankMode === 'points' ? 'color:var(--accent-on);' : ''}
         onclick={() => rankMode.set('points')}>Points</button>
       <button
-        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode === 'winrate' ? 'text-white' : 'tx-muted'}"
+        class="relative z-10 px-3 py-1 text-[11px] font-semibold rounded transition-colors {$rankMode !== 'winrate' ? 'tx-muted' : ''}"
+        style={$rankMode === 'winrate' ? 'color:var(--accent-on);' : ''}
         onclick={() => rankMode.set('winrate')}>Win %</button>
     </div>
   </div>

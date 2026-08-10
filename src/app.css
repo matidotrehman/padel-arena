@@ -33,6 +33,7 @@ html.light {
   --input-bg: #ffffff;
   --accent-fg: #059669; /* readable emerald for text/icons on light */
   --accent-bright: #10b981; /* vivid fill for active states/highlights */
+  --accent-on: #ffffff; /* text color placed on top of an accent-bright fill */
   --grad-a: var(--accent-fg);
   --grad-b: var(--accent-fg);
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -42,21 +43,22 @@ html.light {
 }
 
 html.dark {
-  --tx: #f1f5f9;
+  --tx: #ffffff;
   --tx-muted: #94a3b8;
   --tx-faint: #64748b;
-  --surface-1: #111827;
-  --surface-2: #111827;
-  --border: #24304a;
-  --border-hi: transparent;
-  --input-bg: #0b1220;
-  --accent-fg: #10b981;
-  --accent-bright: #10b981;
+  --surface-1: #1e2638;
+  --surface-2: #1e2638;
+  --border: #2d3748;
+  --border-hi: rgba(255, 255, 255, 0.07);
+  --input-bg: #1e2638;
+  --accent-fg: #00ff87;
+  --accent-bright: #00ff87;
+  --accent-on: #052013; /* dark text placed on top of the vivid green fill */
   --grad-a: var(--accent-fg);
   --grad-b: var(--accent-fg);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 8px 24px -14px rgba(0, 0, 0, 0.7);
   --accent-adjust: none;
-  --page-solid: #0b1220;
+  --page-solid: #0b0f17;
   color-scheme: dark;
 }
 
@@ -131,7 +133,7 @@ body {
 
   .btn-primary {
     background: var(--btn-b, var(--accent-bright));
-    color: #ffffff;
+    color: var(--accent-on);
     box-shadow: none;
   }
   .btn-primary:hover {
@@ -151,10 +153,16 @@ body {
   }
 
   .chip-neutral {
-    @apply inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em];
-    background: var(--page-solid);
+    @apply inline-flex items-center gap-[5px] rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.04em];
+    background: color-mix(in srgb, var(--tx) 6%, transparent);
     color: var(--tx-muted);
     border: 1px solid var(--border);
+  }
+
+  .chip-dot {
+    @apply inline-block rounded-full shrink-0;
+    width: 6px;
+    height: 6px;
   }
 
   .card {

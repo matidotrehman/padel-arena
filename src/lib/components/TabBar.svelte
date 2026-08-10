@@ -14,11 +14,11 @@
   ];
 </script>
 
-<nav class="fixed bottom-0 inset-x-0 z-40 px-3 pt-2"
-     style="padding-bottom:max(0.5rem, env(safe-area-inset-bottom));
-            background:linear-gradient(180deg, transparent, var(--page-solid) 55%);">
-  <div class="max-w-lg mx-auto relative grid grid-cols-7 gap-0.5 rounded-xl p-1.5"
-       style="background:var(--surface-1);border:1px solid var(--border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">
+<nav class="fixed bottom-0 inset-x-0 z-40 px-1"
+     style="padding-bottom:env(safe-area-inset-bottom);
+            background:var(--page-solid);
+            border-top:1px solid var(--border);">
+  <div class="max-w-lg mx-auto grid grid-cols-7 gap-0.5 py-1.5">
     {#each tabs as t}
       {@const on = active === t.id}
       {@const Icon = t.icon}

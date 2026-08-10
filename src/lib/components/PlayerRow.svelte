@@ -14,18 +14,28 @@
   const visibleChips = $derived(chips.slice(0, 3));
   const extraChips = $derived(chips.length - visibleChips.length);
 
-  const RANK_COLOR = { 1: '#B8860B', 2: '#94A3B8', 3: '#B45309' };
-  const stripe = $derived(RANK_COLOR[rank] || 'var(--border)');
+  const NUMBER_COLOR = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' };
+  const STRIPE_COLOR = { 1: 'var(--accent-fg)', 2: '#C0C0C0', 3: '#CD7F32' };
+  const numberColor = $derived(NUMBER_COLOR[rank] || 'var(--tx-faint)');
+  const stripe = $derived(STRIPE_COLOR[rank] || 'var(--border)');
+  const isTop = $derived(rank === 1);
 </script>
 
 <button
   type="button"
   onclick={() => onselect?.(player)}
   class="relative w-full text-left transition active:scale-[0.99] rounded-lg pl-3 pr-3 py-2.5 flex items-center gap-3"
-  style="background:var(--surface-1);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-left:3px solid {stripe};"
+  style="
+    background:var(--surface-1);
+    border-top:1px solid var(--border);
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    border-left:3px solid {stripe};
+    box-shadow:{isTop ? '0 0 0 1px color-mix(in srgb, var(--accent-fg) 25%, transparent), 0 8px 20px -12px var(--accent-fg)' : 'var(--shadow-card)'};
+  "
 >
   <div class="w-5 text-center shrink-0">
-    <span class="mono font-bold text-[13px]" style={rank <= 3 ? `color:${stripe};` : 'color:var(--tx-faint);'}>{rank}</span>
+    <span class="mono font-bold text-[13px]" style="color:{numberColor};">{rank}</span>
   </div>
 
   <Avatar {player} size={38} />
@@ -44,7 +54,7 @@
     {#if chips.length}
       <div class="flex items-center gap-1 mt-1">
         {#each visibleChips as c}
-          <span class="chip-neutral">{c.title}</span>
+          <span class="chip-neutral"><span class="chip-dot" style="background:{c.accent};"></span>{c.title}</span>
         {/each}
         {#if extraChips > 0}
           <span class="text-[10px] tx-faint font-semibold">+{extraChips}</span>
@@ -54,7 +64,7 @@
   </div>
 
   <div class="text-right shrink-0">
-    <div class="mono font-bold leading-none text-[18px] tx">
+    <div class="mono font-bold leading-none text-[18px]" style="color:var(--accent-fg);">
       {byWinrate ? wr : avg}{#if byWinrate}<span class="text-[10px] align-top">%</span>{/if}
     </div>
     <div class="text-[9px] uppercase tracking-[0.12em] tx-faint font-bold mt-0.5">
