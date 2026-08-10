@@ -31,7 +31,7 @@
     border-right:1px solid var(--border);
     border-bottom:1px solid var(--border);
     border-left:3px solid {stripe};
-    box-shadow:{isTop ? '0 0 0 1px color-mix(in srgb, var(--accent-fg) 25%, transparent), 0 8px 20px -12px var(--accent-fg)' : 'var(--shadow-card)'};
+    box-shadow:{isTop ? '0 0 0 1px color-mix(in srgb, var(--accent-fg) 25%, transparent), 0 0 16px color-mix(in srgb, var(--accent-fg) 30%, transparent)' : 'var(--shadow-card)'};
   "
 >
   <div class="flex items-center justify-center shrink-0" style="width:20px;min-height:38px;">
