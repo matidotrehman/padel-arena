@@ -3,6 +3,7 @@
   import { headToHead, record, totalEncounters } from '../logic/h2h.js';
   import { winRate, avgPoints, pointDiff, form } from '../logic/stats.js';
   import { computePlayerAchievements } from '../logic/achievements.js';
+  import Avatar from './Avatar.svelte';
 
   let { player, players, matches, onclose } = $props();
 
