@@ -16,7 +16,7 @@
 
 <div class="space-y-2.5">
   <!-- Ranking mode switch -->
-  <div class="glass rounded-2xl p-1 grid grid-cols-2 gap-1">
+  <div class="rounded-2xl p-1 grid grid-cols-2 gap-1" style="background:var(--surface-1);border:1px solid var(--border);">
     <button
       class="btn !py-2 text-sm {$rankMode === 'points' ? 'btn-primary' : 'tx-muted'}"
       onclick={() => rankMode.set('points')}>⚡ Points</button>
@@ -26,7 +26,7 @@
   </div>
 
   {#if !hasGames}
-    <div class="card text-center py-8 tx-muted" in:fade>
+    <div class="rounded-2xl text-center py-8 tx-muted" style="background:var(--surface-1);border:1px solid var(--border);" in:fade>
       <div class="text-4xl mb-2">🎾</div>
       <p class="font-semibold tx">No matches in this timeframe</p>
       <p class="text-sm">Try a different date range, or log a game / run an Americano.</p>
