@@ -48,9 +48,10 @@
   const leader = $derived($rangeRanked.find((p) => p.matchesPlayed > 0));
 </script>
 
-<div class="min-h-dvh max-w-lg mx-auto px-4 pt-5 pb-28">
-  <!-- Header -->
-  <header class="flex items-center justify-between gap-2 mb-3">
+<div class="h-dvh flex flex-col max-w-lg mx-auto overflow-hidden">
+  <!-- Header: pinned, never scrolls away -->
+  <header class="shrink-0 z-20 flex items-center justify-between gap-2 px-4"
+           style="padding-top:max(1.25rem, env(safe-area-inset-top)); padding-bottom:0.75rem; background:var(--page-solid);">
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <span class="grid place-items-center w-8 h-8 rounded-lg shrink-0"
@@ -78,38 +79,40 @@
     </div>
   </header>
 
-  {#if showDateBar}
-    <DateRangeBar />
-  {/if}
+  <!-- Scrollable body: everything else lives here, independent of the pinned header/nav -->
+  <div class="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-24">
+    {#if showDateBar}
+      <DateRangeBar />
+    {/if}
 
-  <!-- Tab content -->
-  {#key active}
-    <main data-tab={active} in:fly={{ y: 14, duration: 220 }}>
-      {#if active === 'leaderboard'}
-        <div class="grid grid-cols-3 gap-2 mb-4">
-          <StatCard label="Games" value={totalGames} icon={Activity} />
-          <StatCard label="Points" value={totalPoints} icon={Zap} />
-          <StatCard label="Players" value={$players.length} icon={Users} />
-        </div>
-        <LeaderboardTable />
-      {:else if active === 'log'}
-        <MatchLogger />
-      {:else if active === 'americano'}
-        <AmericanoMixer />
-      {:else if active === 'badges'}
-        <BadgesPanel />
-      {:else if active === 'chemistry'}
-        <AnalyticsHub />
-      {:else if active === 'history'}
-        <MatchHistory />
-      {:else if active === 'manage'}
-        <div class="space-y-6">
-          <DataSync />
-          <PlayersManager />
-        </div>
-      {/if}
-    </main>
-  {/key}
+    {#key active}
+      <main data-tab={active} in:fly={{ y: 14, duration: 220 }}>
+        {#if active === 'leaderboard'}
+          <div class="grid grid-cols-3 gap-2 mb-4">
+            <StatCard label="Games" value={totalGames} icon={Activity} />
+            <StatCard label="Points" value={totalPoints} icon={Zap} />
+            <StatCard label="Players" value={$players.length} icon={Users} />
+          </div>
+          <LeaderboardTable />
+        {:else if active === 'log'}
+          <MatchLogger />
+        {:else if active === 'americano'}
+          <AmericanoMixer />
+        {:else if active === 'badges'}
+          <BadgesPanel />
+        {:else if active === 'chemistry'}
+          <AnalyticsHub />
+        {:else if active === 'history'}
+          <MatchHistory />
+        {:else if active === 'manage'}
+          <div class="space-y-6">
+            <DataSync />
+            <PlayersManager />
+          </div>
+        {/if}
+      </main>
+    {/key}
+  </div>
 </div>
 
 <TabBar bind:active />

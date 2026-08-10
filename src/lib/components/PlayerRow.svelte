@@ -11,11 +11,11 @@
   const earned = $derived(badges.filter((b) => b.winner && b.winner.id === player.id));
   const tier = $derived(computeTierBadge(player, tierPool));
   const chips = $derived([...(tier ? [tier] : []), ...earned]);
-  const visibleChips = $derived(chips.slice(0, 3));
+  const visibleChips = $derived(chips.slice(0, 2));
   const extraChips = $derived(chips.length - visibleChips.length);
 
-  const NUMBER_COLOR = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' };
-  const STRIPE_COLOR = { 1: 'var(--accent-fg)', 2: '#C0C0C0', 3: '#CD7F32' };
+  const NUMBER_COLOR = { 1: '#FACC15', 2: '#CBD5E1', 3: '#D97706' };
+  const STRIPE_COLOR = { 1: 'var(--accent-fg)', 2: '#CBD5E1', 3: '#D97706' };
   const numberColor = $derived(NUMBER_COLOR[rank] || 'var(--tx-faint)');
   const stripe = $derived(STRIPE_COLOR[rank] || 'var(--border)');
   const isTop = $derived(rank === 1);
@@ -52,12 +52,14 @@
       <span style="color:{diff >= 0 ? 'var(--accent-fg)' : '#DC2626'};">{diff >= 0 ? '+' : ''}{diff}</span>
     </div>
     {#if chips.length}
-      <div class="flex items-center gap-1 mt-1">
+      <div class="flex flex-wrap items-center gap-1 mt-1 max-w-full">
         {#each visibleChips as c}
-          <span class="chip-neutral"><span class="chip-dot" style="background:{c.accent};"></span>{c.title}</span>
+          <span class="chip-neutral" style="background:{c.accent}26;border-color:{c.accent}40;color:{c.accent};">
+            <span class="chip-dot" style="background:{c.accent};"></span>{c.title}
+          </span>
         {/each}
         {#if extraChips > 0}
-          <span class="text-[10px] tx-faint font-semibold">+{extraChips}</span>
+          <span class="chip-neutral" style="color:var(--tx-faint);">+{extraChips}</span>
         {/if}
       </div>
     {/if}

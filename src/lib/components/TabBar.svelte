@@ -16,7 +16,9 @@
 
 <nav class="fixed bottom-0 inset-x-0 z-40 px-1"
      style="padding-bottom:env(safe-area-inset-bottom);
-            background:var(--page-solid);
+            background:color-mix(in srgb, var(--page-solid) 82%, transparent);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
             border-top:1px solid var(--border);">
   <div class="max-w-lg mx-auto grid grid-cols-7 gap-0.5 py-1.5">
     {#each tabs as t}
