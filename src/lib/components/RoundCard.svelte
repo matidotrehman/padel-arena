@@ -11,12 +11,17 @@
   const done = $derived(roundPlayed(round));
   const aWon = $derived(done && +round.scoreA > +round.scoreB);
   const bWon = $derived(done && +round.scoreB > +round.scoreA);
+  const hasScore = $derived(round.scoreA != null || round.scoreB != null);
 
   function set(field, val) {
     const v = val === '' ? null : Math.max(0, +val);
     const a = field === 'a' ? v : round.scoreA;
     const b = field === 'b' ? v : round.scoreB;
     onscore(index, a, b);
+  }
+
+  function markNotPlayed() {
+    onscore(index, null, null);
   }
 </script>
 
@@ -29,9 +34,17 @@
       <span class="chip tx-muted" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Round {round.round}</span>
       {#if isNext}<span class="chip neon-text" style="background:color-mix(in srgb, var(--accent-fg) 16%, transparent);">▶ Up next</span>{/if}
     </div>
-    {#if resting.length}
-      <span class="text-[11px] tx-faint truncate">😴 {resting.map((p) => p.name).join(', ')}</span>
-    {/if}
+    <div class="flex items-center gap-2">
+      {#if resting.length}
+        <span class="text-[11px] tx-faint truncate">😴 {resting.map((p) => p.name).join(', ')}</span>
+      {/if}
+      {#if hasScore}
+        <button class="chip tx-muted hover:text-hot" style="background:color-mix(in srgb, var(--tx) 7%, transparent);"
+                onclick={markNotPlayed}>🚫 Not played</button>
+      {:else}
+        <span class="chip tx-faint" style="background:color-mix(in srgb, var(--tx) 5%, transparent);">Not played</span>
+      {/if}
+    </div>
   </div>
 
   <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
