@@ -52,14 +52,14 @@ html.light {
 }
 
 html.dark {
-  --tx: #eef7f0;
-  --tx-muted: #9db3a6;
-  --tx-faint: #648272;
-  --surface-1: #10201a;
-  --surface-2: #16281f;
-  --border: #22362c;
-  --border-hi: rgba(180, 255, 210, 0.07);
-  --input-bg: #10201a;
+  --tx: #f5faf7;
+  --tx-muted: #bccdc4;
+  --tx-faint: #87998f;
+  --surface-1: #142720;
+  --surface-2: #1a3027;
+  --border: #2c443a;
+  --border-hi: rgba(190, 255, 220, 0.09);
+  --input-bg: #142720;
   --accent-fg: #3ecf96;
   --accent-bright: #2bb37e;
   --accent-on: #052013; /* dark text placed on top of the vivid green fill */
