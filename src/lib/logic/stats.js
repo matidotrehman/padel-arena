@@ -1,4 +1,5 @@
 // Pure stat derivations from a player's stored record.
+import { Flame, TrendingUp, Snowflake, TrendingDown, Check, Minus } from '@lucide/svelte';
 
 export function winRate(p) {
   if (!p.matchesPlayed) return 0;
@@ -19,16 +20,16 @@ export function currentStreak(p) {
   return last === 'W' ? n : -n;
 }
 
-// Form emoji + label from the current streak.
+// Form icon + label from the current streak.
 export function form(p) {
   const s = currentStreak(p);
-  if (s >= 3) return { icon: '🔥', label: `${s}W streak`, tone: 'hot' };
-  if (s === 2) return { icon: '📈', label: '2W', tone: 'up' };
-  if (s <= -3) return { icon: '❄️', label: `${-s}L slump`, tone: 'ice' };
-  if (s === -2) return { icon: '📉', label: '2L', tone: 'down' };
-  if (s === 1) return { icon: '✅', label: 'Won last', tone: 'up' };
-  if (s === -1) return { icon: '➖', label: 'Lost last', tone: 'down' };
-  return { icon: '·', label: 'No games', tone: 'neutral' };
+  if (s >= 3) return { icon: Flame, label: `${s}W streak`, tone: 'hot' };
+  if (s === 2) return { icon: TrendingUp, label: '2W', tone: 'up' };
+  if (s <= -3) return { icon: Snowflake, label: `${-s}L slump`, tone: 'ice' };
+  if (s === -2) return { icon: TrendingDown, label: '2L', tone: 'down' };
+  if (s === 1) return { icon: Check, label: 'Won last', tone: 'up' };
+  if (s === -1) return { icon: Minus, label: 'Lost last', tone: 'down' };
+  return { icon: Minus, label: 'No games', tone: 'neutral' };
 }
 
 export function avgConceded(p) {

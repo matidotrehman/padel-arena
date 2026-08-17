@@ -1,4 +1,5 @@
 <script>
+  import { fly } from 'svelte/transition';
   import { players } from '../stores/store.js';
   import { filteredMatches } from '../stores/analytics.js';
   import { headToHead, record, totalEncounters } from '../logic/h2h.js';
@@ -36,7 +37,7 @@
   </div>
 
   {#if playerA && playerB}
-    <div class="card space-y-3">
+    <div class="card space-y-3" in:fly={{ y: 12, duration: 220 }}>
       <div class="flex items-center justify-center gap-4">
         <div class="flex flex-col items-center gap-1">
           <Avatar player={playerA} size={48} />
@@ -53,17 +54,17 @@
         <p class="text-center text-sm tx-faint italic">Haven't played each other yet in this timeframe.</p>
       {:else}
         <div class="grid grid-cols-2 gap-2">
-          <div class="glass rounded-xl p-3 text-center">
+          <div class="h2h-stat glass rounded-[var(--radius-md)] p-3 text-center" in:fly={{ y: 10, duration: 200, delay: 40 }}>
             <div class="label !mb-1">Against</div>
             {#if rec.oppW + rec.oppL > 0}
               <div class="mono font-extrabold text-2xl {rec.oppW > rec.oppL ? 'neon-text' : 'tx'}"
-                   style={rec.oppW < rec.oppL ? 'color:#ff5e3a;' : ''}>{rec.oppW}–{rec.oppL}</div>
+                   style={rec.oppW < rec.oppL ? 'color:var(--color-hot);' : ''}>{rec.oppW}–{rec.oppL}</div>
               <div class="text-xs tx-faint mono mt-1">{rec.oppPF}–{rec.oppPA} pts</div>
             {:else}
               <span class="tx-faint text-sm">–</span>
             {/if}
           </div>
-          <div class="glass rounded-xl p-3 text-center">
+          <div class="h2h-stat glass rounded-[var(--radius-md)] p-3 text-center" in:fly={{ y: 10, duration: 200, delay: 80 }}>
             <div class="label !mb-1">With</div>
             {#if rec.partW + rec.partL > 0}
               <div class="mono font-extrabold text-2xl tx">{rec.partW}–{rec.partL}</div>
@@ -77,3 +78,13 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .h2h-stat {
+    transition: background-color 180ms var(--ease-out-smooth), transform 180ms var(--ease-spring);
+  }
+  .h2h-stat:hover {
+    background: var(--overlay-1);
+    transform: translateY(-2px);
+  }
+</style>

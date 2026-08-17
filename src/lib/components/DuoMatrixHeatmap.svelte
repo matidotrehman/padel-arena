@@ -1,4 +1,6 @@
 <script>
+  import { fade } from 'svelte/transition';
+  import { Grid3x3, X } from '@lucide/svelte';
   import { players } from '../stores/store.js';
   import { filteredMatches } from '../stores/analytics.js';
   import { computeFullDuoMatrix } from '../logic/analyticsEngine.js';
@@ -21,22 +23,22 @@
   function getCellStyle(cell, mode) {
     if (mode === 'partner') {
       const total = cell.partnerWins + cell.partnerLosses;
-      if (!total) return 'background:rgba(255,255,255,0.03);color:var(--tx-faint,#64748b);';
+      if (!total) return 'background:var(--overlay-1);color:var(--tx-faint);';
       const pct = Math.round((cell.partnerWins / total) * 100);
       if (pct >= 70)
-        return 'background:color-mix(in srgb, var(--color-neon-green, #b6ff2e) 24%, transparent);color:var(--color-neon-green, #b6ff2e);font-weight:800;';
+        return 'background:color-mix(in srgb, var(--color-neon-green) 24%, transparent);color:var(--color-neon-green);font-weight:800;';
       if (pct >= 50)
-        return 'background:rgba(34, 224, 200, 0.18);color:#22e0c8;font-weight:700;';
-      return 'background:rgba(255, 94, 58, 0.16);color:#ff5e3a;font-weight:700;';
+        return 'background:color-mix(in srgb, var(--color-neon-cyan) 20%, transparent);color:var(--color-neon-cyan);font-weight:700;';
+      return 'background:color-mix(in srgb, var(--color-hot) 18%, transparent);color:var(--color-hot);font-weight:700;';
     } else {
       const total = cell.vsWins + cell.vsLosses;
-      if (!total) return 'background:rgba(255,255,255,0.03);color:var(--tx-faint,#64748b);';
+      if (!total) return 'background:var(--overlay-1);color:var(--tx-faint);';
       const pct = Math.round((cell.vsWins / total) * 100);
       if (pct >= 60)
-        return 'background:color-mix(in srgb, var(--color-neon-green, #b6ff2e) 22%, transparent);color:var(--color-neon-green, #b6ff2e);font-weight:800;';
+        return 'background:color-mix(in srgb, var(--color-neon-green) 22%, transparent);color:var(--color-neon-green);font-weight:800;';
       if (pct >= 40)
-        return 'background:rgba(56, 189, 248, 0.16);color:#38bdf8;font-weight:700;';
-      return 'background:rgba(255, 94, 58, 0.16);color:#ff5e3a;font-weight:700;';
+        return 'background:color-mix(in srgb, var(--color-ice) 18%, transparent);color:var(--color-ice);font-weight:700;';
+      return 'background:color-mix(in srgb, var(--color-hot) 18%, transparent);color:var(--color-hot);font-weight:700;';
     }
   }
 
@@ -57,24 +59,26 @@
   <div class="flex items-center justify-between gap-2">
     <div>
       <h3 class="font-display font-bold neon-text text-base flex items-center gap-1.5">
-        <span>🧩</span> Pair Chemistry Heatmap
+        <Grid3x3 size={16} strokeWidth={2.25} /> Pair Chemistry Heatmap
       </h3>
       <p class="text-xs tx-muted">Complete NxN grid of all partner &amp; rivalry stats</p>
     </div>
     <!-- Mode Toggle -->
-    <div class="glass rounded-xl p-0.5 flex items-center shrink-0">
+    <div class="glass rounded-[var(--radius-md)] p-0.5 flex items-center shrink-0">
       <button
-        class="px-2 py-1 rounded-lg text-xs font-bold transition-all {viewMode === 'partner'
-          ? 'bg-emerald-500/20 text-emerald-300'
+        class="px-2 py-1 rounded-[var(--radius-sm)] text-xs font-bold transition-all active:scale-95 {viewMode === 'partner'
+          ? 'accent-el'
           : 'tx-faint'}"
+        style={viewMode === 'partner' ? 'background:color-mix(in srgb, var(--accent-fg) 20%, transparent);color:var(--accent-fg);' : ''}
         onclick={() => (viewMode = 'partner')}
       >
         As Partners
       </button>
       <button
-        class="px-2 py-1 rounded-lg text-xs font-bold transition-all {viewMode === 'vs'
-          ? 'bg-sky-500/20 text-sky-300'
+        class="px-2 py-1 rounded-[var(--radius-sm)] text-xs font-bold transition-all active:scale-95 {viewMode === 'vs'
+          ? ''
           : 'tx-faint'}"
+        style={viewMode === 'vs' ? 'background:color-mix(in srgb, var(--color-ice) 20%, transparent);color:var(--color-ice);' : ''}
         onclick={() => (viewMode = 'vs')}
       >
         Rivals (VS)
@@ -83,7 +87,7 @@
   </div>
 
   <!-- Heatmap Matrix Table -->
-  <div class="overflow-x-auto rounded-xl border border-white/10 glass p-1">
+  <div class="overflow-x-auto rounded-[var(--radius-md)] border glass p-1" style="border-color:var(--border);">
     <table class="w-full text-center border-collapse">
       <thead>
         <tr>
@@ -99,7 +103,7 @@
       </thead>
       <tbody>
         {#each $players as p1}
-          <tr class="border-t border-white/5">
+          <tr class="border-t" style="border-color:var(--border);">
             <td class="p-1.5 text-xs font-bold tx truncate max-w-[70px] text-left flex items-center gap-1">
               <Avatar player={p1} size={18} />
               <span class="truncate">{p1.name}</span>
@@ -110,15 +114,15 @@
               {@const isSelected = selectedPair?.p1.id === p1.id && selectedPair?.p2.id === p2.id}
               <td class="p-1">
                 {#if isSelf}
-                  <div class="w-full h-8 rounded-lg grid place-items-center bg-white/5 text-xs tx-faint opacity-40">
+                  <div class="w-full h-8 rounded-[var(--radius-sm)] grid place-items-center text-xs tx-faint opacity-40" style="background:var(--overlay-1);">
                     —
                   </div>
                 {:else if cell}
                   <button
-                    class="w-full h-8 rounded-lg grid place-items-center text-xs transition-all active:scale-95 {isSelected
-                      ? 'ring-2 ring-emerald-400 scale-105 z-10'
+                    class="w-full h-8 rounded-[var(--radius-sm)] grid place-items-center text-xs transition-all active:scale-95 {isSelected
+                      ? 'scale-105 z-10 ring-2'
                       : ''}"
-                    style={getCellStyle(cell, viewMode)}
+                    style="{getCellStyle(cell, viewMode)}{isSelected ? 'box-shadow:0 0 0 2px var(--accent-fg);' : ''}"
                     onclick={() => selectCell(p1, p2, cell)}
                   >
                     {getCellDisplay(cell, viewMode)}
@@ -140,7 +144,11 @@
     {@const vsTotal = cell.vsWins + cell.vsLosses}
     {@const vsPct = vsTotal ? Math.round((cell.vsWins / vsTotal) * 100) : 0}
 
-    <div class="glass rounded-xl p-3 border border-emerald-500/30 space-y-2 animate-in fade-in duration-200">
+    <div
+      class="glass rounded-[var(--radius-md)] p-3 space-y-2"
+      style="border-color:color-mix(in srgb, var(--accent-fg) 30%, transparent);"
+      in:fade={{ duration: 200 }}
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="flex items-center -space-x-2">
@@ -155,15 +163,16 @@
           </div>
         </div>
         <button
-          class="text-xs tx-faint hover:tx p-1"
+          class="tx-faint hover:tx p-1 rounded-[var(--radius-sm)] transition active:scale-90"
           onclick={() => (selectedPair = null)}
+          aria-label="Close"
         >
-          ✕
+          <X size={14} strokeWidth={2.25} />
         </button>
       </div>
 
       <div class="grid grid-cols-2 gap-2 text-center pt-1">
-        <div class="glass rounded-lg p-2">
+        <div class="glass rounded-[var(--radius-sm)] p-2">
           <div class="text-[10px] uppercase font-bold tx-faint">As Partners</div>
           {#if partTotal > 0}
             <div class="mono font-extrabold text-lg neon-text">{partPct}%</div>
@@ -174,10 +183,10 @@
           {/if}
         </div>
 
-        <div class="glass rounded-lg p-2">
+        <div class="glass rounded-[var(--radius-sm)] p-2">
           <div class="text-[10px] uppercase font-bold tx-faint">Head-to-Head (VS)</div>
           {#if vsTotal > 0}
-            <div class="mono font-extrabold text-lg text-sky-400">{vsPct}% win for {p1.name}</div>
+            <div class="mono font-extrabold text-lg" style="color:var(--color-ice);">{vsPct}% win for {p1.name}</div>
             <div class="text-[11px] tx-faint">{cell.vsWins}W – {cell.vsLosses}L ({vsTotal} matches)</div>
           {:else}
             <div class="text-xs tx-faint italic py-1">No opponent matches</div>

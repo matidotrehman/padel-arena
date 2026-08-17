@@ -1,11 +1,21 @@
 <script>
   import { fly, fade } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
+  import { Crown, Zap, Shield, Target } from '@lucide/svelte';
   import { headToHead, record, totalEncounters } from '../logic/h2h.js';
   import { winRate, avgPoints, pointDiff, form } from '../logic/stats.js';
   import { computePlayerAchievements } from '../logic/achievements.js';
   import Avatar from './Avatar.svelte';
 
   let { player, players, matches, onclose } = $props();
+
+  const FORM_TONE_COLOR = {
+    hot: 'var(--color-hot)',
+    up: 'var(--accent-fg)',
+    ice: 'var(--color-ice)',
+    down: 'var(--tx-muted)',
+    neutral: 'var(--tx-faint)',
+  };
 
   const h2h = $derived(headToHead(matches));
   const f = $derived(form(player));
@@ -23,27 +33,32 @@
   const archetype = $derived.by(() => {
     const wr = winRate(player);
     const pd = pointDiff(player);
-    if (wr >= 65) return { title: 'Apex Competitor 👑', tag: 'Dominant Win Rate' };
-    if (pd > 15) return { title: 'Smash Powerhouse ⚡', tag: 'High Point Differential' };
-    if (player.wins >= player.losses) return { title: 'Court General 🛡️', tag: 'Consistent Performer' };
-    return { title: 'The Challenger 🎯', tag: 'Rising Contender' };
+    if (wr >= 65) return { title: 'Apex Competitor', icon: Crown, tag: 'Dominant Win Rate' };
+    if (pd > 15) return { title: 'Smash Powerhouse', icon: Zap, tag: 'High Point Differential' };
+    if (player.wins >= player.losses) return { title: 'Court General', icon: Shield, tag: 'Consistent Performer' };
+    return { title: 'The Challenger', icon: Target, tag: 'Rising Contender' };
   });
+  const ArchetypeIcon = $derived(archetype.icon);
 </script>
 
-<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/70 backdrop-blur-sm"
-     transition:fade={{ duration: 150 }}
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 backdrop-blur-sm"
+     style="background:var(--scrim);"
+     transition:fade={{ duration: 150, easing: cubicOut }}
      onclick={(e) => { if (e.target === e.currentTarget) onclose(); }} role="presentation">
-  <div class="glass rounded-3xl w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
-       transition:fly={{ y: 30, duration: 250 }} role="dialog" aria-modal="true" tabindex="-1">
+  <div class="glass rounded-[var(--radius-lg)] w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+       transition:fly={{ y: 30, duration: 250, easing: cubicOut }} role="dialog" aria-modal="true" tabindex="-1">
     <!-- Header -->
     <div class="flex items-center gap-3">
       <Avatar {player} size={54} />
       <div class="min-w-0 flex-1">
         <div class="h-display font-extrabold text-xl truncate tx flex items-center gap-1.5">
           <span>{player.name}</span>
-          <span class="text-sm">{f.icon}</span>
+          <f.icon size={14} strokeWidth={2.5} color={FORM_TONE_COLOR[f.tone]} />
         </div>
-        <div class="text-xs font-semibold text-emerald-400 leading-tight">{archetype.title}</div>
+        <div class="text-xs font-semibold neon-text leading-tight flex items-center gap-1">
+          <ArchetypeIcon size={12} strokeWidth={2.25} />
+          {archetype.title}
+        </div>
         <div class="text-[11px] tx-muted mono mt-0.5">
           {player.matchesPlayed} games · {player.wins}W {player.losses}L ({winRate(player)}%)
         </div>
@@ -56,15 +71,19 @@
 
     <!-- Career Achievements -->
     {#if achs.unlocked.length}
-      <div class="glass rounded-2xl p-2.5 space-y-1 border border-emerald-500/20">
+      <div class="glass rounded-[var(--radius-md)] p-2.5 space-y-1" style="border-color:color-mix(in srgb, var(--accent-fg) 20%, transparent);">
         <div class="text-[10px] font-bold uppercase tracking-wider tx-faint flex items-center justify-between">
           <span>Career Achievements</span>
-          <span class="text-emerald-400 font-mono">{achs.count}/{achs.total} Unlocked</span>
+          <span class="mono" style="color:var(--accent-fg);">{achs.count}/{achs.total} Unlocked</span>
         </div>
         <div class="flex flex-wrap gap-1">
           {#each achs.unlocked as ach (ach.id)}
-            <span class="chip !px-2 !py-0.5 text-[11px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30" title={ach.description}>
-              {ach.icon} {ach.title}
+            <span
+              class="chip !px-2 !py-0.5 text-[11px]"
+              style="background:color-mix(in srgb, var(--accent-fg) 10%, transparent);color:var(--accent-fg);border:1px solid color-mix(in srgb, var(--accent-fg) 30%, transparent);"
+              title={ach.description}
+            >
+              <ach.icon size={11} strokeWidth={2.5} /> {ach.title}
             </span>
           {/each}
         </div>
@@ -90,7 +109,7 @@
     <!-- Rows -->
     <div class="space-y-1.5">
       {#each rows as { q, rec, total, oppGames, diff } (q.id)}
-        <div class="glass rounded-xl pl-3 pr-2 py-2 flex items-center gap-2">
+        <div class="glass rounded-[var(--radius-md)] pl-3 pr-2 py-2 flex items-center gap-2">
           <Avatar player={q} size={30} />
           <span class="flex-1 truncate text-sm font-medium tx">{q.name}</span>
 
@@ -100,9 +119,9 @@
             <!-- Against -->
             <div class="w-[74px] text-center leading-tight">
               {#if oppGames > 0}
-                <div class="mono font-bold text-[15px] {rec.oppW > rec.oppL ? 'neon-text' : rec.oppW < rec.oppL ? 'accent-el' : 'tx'}"
-                     style={rec.oppW < rec.oppL ? 'color:#ff5e3a' : ''}>{rec.oppW}–{rec.oppL}</div>
-                <div class="text-[10px] mono {diff >= 0 ? 'neon-text' : 'accent-el'}" style={diff >= 0 ? '' : 'color:#ff5e3a'}>
+                <div class="mono font-bold text-[15px]"
+                     style={rec.oppW > rec.oppL ? 'color:var(--accent-fg);' : rec.oppW < rec.oppL ? 'color:var(--color-hot);' : 'color:var(--tx);'}>{rec.oppW}–{rec.oppL}</div>
+                <div class="text-[10px] mono" style={diff >= 0 ? 'color:var(--accent-fg);' : 'color:var(--color-hot);'}>
                   {diff >= 0 ? '+' : ''}{diff}
                 </div>
               {:else}

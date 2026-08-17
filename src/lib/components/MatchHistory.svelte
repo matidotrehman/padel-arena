@@ -6,6 +6,28 @@
   import { checkPin } from '../logic/pin.js';
   import Avatar from './Avatar.svelte';
   import RoundCard from './RoundCard.svelte';
+  import { Volleyball, User, Shuffle, ScrollText, Pencil, Trash2, Trophy } from '@lucide/svelte';
+
+  // JS equivalents of the CSS --ease-spring / --ease-out-smooth tokens, for use in
+  // Svelte's fly/fade transitions (which take an easing function, not a CSS string).
+  function cubicBezier(x1, y1, x2, y2) {
+    const A = (a1, a2) => 1 - 3 * a2 + 3 * a1;
+    const B = (a1, a2) => 3 * a2 - 6 * a1;
+    const C = (a1) => 3 * a1;
+    const calc = (t, a1, a2) => ((A(a1, a2) * t + B(a1, a2)) * t + C(a1)) * t;
+    const slope = (t, a1, a2) => 3 * A(a1, a2) * t * t + 2 * B(a1, a2) * t + C(a1);
+    return (x) => {
+      let t = x;
+      for (let i = 0; i < 4; i++) {
+        const s = slope(t, x1, x2);
+        if (s === 0) break;
+        t -= (calc(t, x1, x2) - x) / s;
+      }
+      return calc(t, y1, y2);
+    };
+  }
+  const easeSpring = cubicBezier(0.34, 1.56, 0.64, 1);
+  const easeOutSmooth = cubicBezier(0.16, 1, 0.3, 1);
 
   const byId = $derived(Object.fromEntries($players.map((p) => [p.id, p])));
   const name = (id) => byId[id]?.name ?? 'Removed';
@@ -14,9 +36,9 @@
   const list = $derived([...$matches].sort((a, b) => (b.date || 0) - (a.date || 0)));
 
   const MODES = {
-    fixed: { icon: '🎾', label: 'Fixed 2v2' },
-    individual: { icon: '👤', label: 'Individual' },
-    americano: { icon: '🔀', label: 'Americano' },
+    fixed: { icon: Volleyball, label: 'Fixed 2v2' },
+    individual: { icon: User, label: 'Individual' },
+    americano: { icon: Shuffle, label: 'Americano' },
   };
 
   function when(ts) {
@@ -126,8 +148,8 @@
   </div>
 
   {#if list.length === 0}
-    <div class="card text-center py-10 tx-muted" in:fade>
-      <div class="text-4xl mb-2">📜</div>
+    <div class="card text-center py-10 tx-muted" in:fade={{ easing: easeOutSmooth }}>
+      <div class="flex justify-center mb-2 tx-faint"><ScrollText size={36} strokeWidth={1.75} /></div>
       <p class="font-semibold tx">No matches logged yet</p>
       <p class="text-sm">Games you log or Americano sessions you finalize show up here.</p>
     </div>
@@ -138,17 +160,18 @@
       <div class="absolute left-[9px] top-3 bottom-3 w-px" style="background:color-mix(in srgb, var(--accent-fg) 28%, transparent);"></div>
     {/if}
     {#each list as m, i (m.id)}
-    {@const mode = MODES[m.mode] || { icon: '🎾', label: m.mode }}
-    <div class="relative pl-6" animate:flip={{ duration: 300 }} in:fly={{ y: 12, duration: 200, delay: Math.min(i, 6) * 30 }}>
+    {@const mode = MODES[m.mode] || { icon: Volleyball, label: m.mode }}
+    {@const ModeIcon = mode.icon}
+    <div class="relative pl-6" animate:flip={{ duration: 300, easing: easeOutSmooth }} in:fly={{ y: 12, duration: 200, delay: Math.min(i, 6) * 30, easing: easeOutSmooth }}>
       <span class="absolute left-[5px] top-4 w-2.5 h-2.5 rounded-full z-10" style="background:var(--accent-fg);box-shadow:0 0 0 3px var(--page-solid), 0 0 8px -1px var(--accent-fg);"></span>
       <div class="card space-y-2.5">
       <div class="flex items-center gap-2">
-        <span class="chip" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">{mode.icon} {mode.label}</span>
+        <span class="chip inline-flex items-center gap-1" style="background:color-mix(in srgb, var(--tx) 7%, transparent);"><ModeIcon size={12} strokeWidth={2.25} /> {mode.label}</span>
         <span class="text-xs tx-faint">{when(m.date)}</span>
-        <button class="ml-auto tx-muted hover:text-hot px-2 text-sm" aria-label="Edit match"
-                onclick={() => openEdit(m)}>✎</button>
-        <button class="tx-faint hover:text-hot px-2 -mr-1 text-sm" aria-label="Delete match"
-                onclick={() => (confirmDel = m)}>🗑</button>
+        <button class="ml-auto tx-muted hover:text-hot px-2 transition-transform duration-150 hover:scale-110 active:scale-90" style="transition-timing-function:var(--ease-spring);" aria-label="Edit match"
+                onclick={() => openEdit(m)}><Pencil size={14} strokeWidth={2.25} /></button>
+        <button class="tx-faint hover:text-hot px-2 -mr-1 transition-transform duration-150 hover:scale-110 active:scale-90" style="transition-timing-function:var(--ease-spring);" aria-label="Delete match"
+                onclick={() => (confirmDel = m)}><Trash2 size={14} strokeWidth={2.25} /></button>
       </div>
 
       {#if m.mode === 'fixed'}
@@ -178,7 +201,7 @@
             <div class="flex items-center gap-2 text-sm">
               <Avatar player={byId[r.id]} size={22} />
               <span class="flex-1 truncate tx {r.won ? 'font-semibold' : ''}">{name(r.id)}</span>
-              {#if r.won}<span class="text-xs">🏆</span>{/if}
+              {#if r.won}<span class="neon-text"><Trophy size={13} strokeWidth={2.25} /></span>{/if}
               <span class="mono font-bold {r.won ? 'neon-text' : 'tx'}">{r.points}</span>
             </div>
           {/each}
@@ -186,7 +209,7 @@
 
       {:else if m.mode === 'americano'}
         {@const top = americanoTop(m)}
-        <button class="w-full text-left space-y-1 active:scale-[0.99] transition" onclick={() => (sessionDetail = m)}>
+        <button class="w-full text-left space-y-1 transition-transform duration-150 hover:brightness-110 active:scale-[0.98]" style="transition-timing-function:var(--ease-spring);" onclick={() => (sessionDetail = m)}>
           <div class="text-xs flex items-center justify-between">
             <span class="tx-muted">{roundsPlayed(m)} rounds · {top.length} players</span>
             <span class="neon-text font-semibold">Full results ›</span>
@@ -211,13 +234,13 @@
 
 {#if sessionDetail}
   {@const st = americanoStandings(sessionDetail)}
-  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/70 backdrop-blur-sm"
-       transition:fade={{ duration: 150 }}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 backdrop-blur-sm" style="background:var(--scrim);"
+       transition:fade={{ duration: 150, easing: easeOutSmooth }}
        onclick={(e) => { if (e.target === e.currentTarget) sessionDetail = null; }} role="presentation">
-    <div class="glass rounded-3xl w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
-         transition:fly={{ y: 30, duration: 250 }} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="glass rounded-[var(--radius-lg)] w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+         transition:fly={{ y: 30, duration: 250, easing: easeSpring }} role="dialog" aria-modal="true" tabindex="-1">
       <div>
-        <div class="h-display font-extrabold text-lg tx">🔀 Americano</div>
+        <div class="h-display font-extrabold text-lg tx flex items-center gap-1.5"><Shuffle size={16} strokeWidth={2.25} /> Americano</div>
         <div class="text-xs tx-muted">{when(sessionDetail.date)} · {roundsPlayed(sessionDetail)} rounds · {st.length} players</div>
       </div>
 
@@ -226,7 +249,7 @@
         <div class="label !mb-1.5">Final standings</div>
         <div class="space-y-1">
           {#each st as r, idx (r.id)}
-            <div class="glass rounded-xl px-3 py-2 flex items-center gap-2.5">
+            <div class="glass rounded-[var(--radius-md)] px-3 py-2 flex items-center gap-2.5">
               <span class="w-6 text-center">{idx < 3 ? ['🥇', '🥈', '🥉'][idx] : idx + 1}</span>
               <Avatar player={byId[r.id]} size={28} />
               <span class="flex-1 truncate text-sm font-medium tx">{name(r.id)}</span>
@@ -261,15 +284,16 @@
 {/if}
 
 {#if confirmDel}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" transition:fade={{ duration: 150 }}
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style="background:var(--scrim);" transition:fade={{ duration: 150, easing: easeOutSmooth }}
        onclick={(e) => { if (e.target === e.currentTarget) confirmDel = null; }} role="presentation">
-    <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center" role="dialog" aria-modal="true" tabindex="-1">
-      <div class="text-3xl">🗑</div>
+    <div class="glass rounded-[var(--radius-lg)] p-5 w-full max-w-sm space-y-3 text-center" role="dialog" aria-modal="true" tabindex="-1"
+         transition:fly={{ y: 20, duration: 200, easing: easeSpring }}>
+      <div class="flex justify-center text-hot"><Trash2 size={30} strokeWidth={1.75} /></div>
       <h3 class="font-display font-bold">Delete this match?</h3>
       <p class="text-sm tx-muted">The match is removed and everyone's lifetime stats recalculate from the remaining games. This can't be undone.</p>
       <div class="grid grid-cols-2 gap-2">
         <button class="btn btn-ghost" onclick={() => (confirmDel = null)}>Cancel</button>
-        <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);"
+        <button class="btn btn-primary" style="background:linear-gradient(180deg, color-mix(in srgb, var(--color-hot) 70%, white), var(--color-hot));"
                 onclick={() => { deleteMatch(confirmDel.id); confirmDel = null; }}>Delete</button>
       </div>
     </div>
@@ -277,13 +301,13 @@
 {/if}
 
 {#if editTarget}
-  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/70 backdrop-blur-sm"
-       transition:fade={{ duration: 150 }}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 backdrop-blur-sm" style="background:var(--scrim);"
+       transition:fade={{ duration: 150, easing: easeOutSmooth }}
        onclick={(e) => { if (e.target === e.currentTarget) closeEdit(); }} role="presentation">
-    <div class="glass rounded-3xl w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
-         transition:fly={{ y: 30, duration: 250 }} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="glass rounded-[var(--radius-lg)] w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+         transition:fly={{ y: 30, duration: 250, easing: easeSpring }} role="dialog" aria-modal="true" tabindex="-1">
       <div>
-        <div class="h-display font-extrabold text-lg tx">✎ Edit match</div>
+        <div class="h-display font-extrabold text-lg tx flex items-center gap-1.5"><Pencil size={16} strokeWidth={2.25} /> Edit match</div>
         <div class="text-xs tx-muted">Only the scores change — teams and participants stay the same.</div>
       </div>
 
@@ -293,9 +317,9 @@
           {#each editDraft.sets as set, i}
             <div class="flex items-center gap-2">
               <span class="text-xs tx-faint w-10">Set {i + 1}</span>
-              <input class="input text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
+              <input class="input mono text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
               <span class="tx-faint">—</span>
-              <input class="input text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
+              <input class="input mono text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
             </div>
           {/each}
         </div>
@@ -303,13 +327,16 @@
       {:else if editTarget.mode === 'individual'}
         <div class="space-y-2">
           {#each editDraft.entries as e (e.id)}
-            <div class="glass rounded-xl px-3 py-2.5 flex items-center gap-3">
+            <div class="glass rounded-[var(--radius-md)] px-3 py-2.5 flex items-center gap-3">
               <Avatar player={byId[e.id]} size={30} />
               <span class="flex-1 truncate font-medium tx">{name(e.id)}</span>
-              <input class="input w-16 text-center py-1.5" type="number" min="0" placeholder="pts"
+              <input class="input mono w-16 text-center py-1.5" type="number" min="0" placeholder="pts"
                      bind:value={e.points} />
-              <button class="text-xl transition {editDraft.winnerIds.includes(e.id) ? '' : 'opacity-30 grayscale'}"
-                      onclick={() => toggleEditWinner(e.id)} aria-label="Toggle winner">🏆</button>
+              <button class="transition-transform duration-150 hover:scale-110 active:scale-90 {editDraft.winnerIds.includes(e.id) ? 'neon-text' : 'tx-faint opacity-30 grayscale'}"
+                      style="transition-timing-function:var(--ease-spring);"
+                      onclick={() => toggleEditWinner(e.id)} aria-label="Toggle winner">
+                <Trophy size={20} strokeWidth={2.25} />
+              </button>
             </div>
           {/each}
         </div>

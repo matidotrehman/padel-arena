@@ -1,4 +1,5 @@
 <script>
+  import { TrendingUp } from '@lucide/svelte';
   import { players } from '../stores/store.js';
   import { filteredMatches } from '../stores/analytics.js';
   import { computeFormTimeline } from '../logic/analyticsEngine.js';
@@ -55,7 +56,7 @@
   <div class="flex items-center justify-between gap-2">
     <div>
       <h3 class="font-display font-bold neon-text text-base flex items-center gap-1.5">
-        <span>📈</span> Rank &amp; Form Timeline
+        <TrendingUp size={16} strokeWidth={2.25} /> Rank &amp; Form Timeline
       </h3>
       <p class="text-xs tx-muted">Match-by-match win rate trajectory</p>
     </div>
@@ -70,8 +71,9 @@
   </div>
 
   {#if !points.length}
-    <div class="glass rounded-xl p-8 text-center tx-faint text-xs italic">
-      No matches logged yet to plot form timeline.
+    <div class="glass rounded-[var(--radius-md)] p-8 text-center tx-faint text-xs">
+      <div class="flex justify-center mb-2"><TrendingUp size={28} strokeWidth={1.75} /></div>
+      <p class="italic">No matches logged yet to plot form timeline.</p>
     </div>
   {:else}
     <div class="relative flex justify-center pt-1">
@@ -84,14 +86,14 @@
             y1={y}
             x2={WIDTH - PADDING_RIGHT}
             y2={y}
-            stroke="rgba(255, 255, 255, 0.08)"
+            stroke="var(--border)"
             stroke-dasharray={tick === 50 ? 'none' : '3,3'}
             stroke-width="1"
           />
           <text
             x={PADDING_LEFT - 6}
             y={y}
-            fill="var(--tx-faint, #64748b)"
+            fill="var(--tx-faint)"
             font-size="9"
             font-weight="600"
             text-anchor="end"
@@ -107,7 +109,7 @@
           y1={HEIGHT - PADDING_BOTTOM}
           x2={WIDTH - PADDING_RIGHT}
           y2={HEIGHT - PADDING_BOTTOM}
-          stroke="rgba(255, 255, 255, 0.15)"
+          stroke="var(--border-hi, var(--border))"
           stroke-width="1"
         />
 
@@ -118,7 +120,7 @@
             <text
               x={x}
               y={HEIGHT - PADDING_BOTTOM + 14}
-              fill="var(--tx-faint, #64748b)"
+              fill="var(--tx-faint)"
               font-size="8"
               font-weight="600"
               text-anchor="middle"
@@ -130,7 +132,7 @@
 
         <!-- Trend Lines for Active Players -->
         {#each activePlayers as p}
-          {@const color = p.avatarColor || '#b6ff2e'}
+          {@const color = p.avatarColor || 'var(--accent-fg)'}
           <path
             d={getPlayerPath(p.id)}
             fill="none"
@@ -139,6 +141,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             opacity={selectedPlayerId === 'all' ? '0.85' : '1'}
+            style="transition: stroke-width 200ms var(--ease-out-smooth), opacity 200ms var(--ease-out-smooth);"
           />
 
           <!-- Dots for each match -->
@@ -151,7 +154,7 @@
               {cy}
               r={selectedPlayerId === p.id ? '4' : '2.5'}
               fill={color}
-              stroke="#0f172a"
+              stroke="var(--page-solid)"
               stroke-width="1"
               role="button"
               tabindex="-1"
@@ -167,8 +170,8 @@
       <!-- Tooltip -->
       {#if hoveredPoint}
         <div
-          class="absolute z-20 glass rounded-lg px-2 py-1 text-[10px] font-bold shadow-lg border border-white/20 pointer-events-none -translate-x-1/2 -translate-y-full mb-2"
-          style="left:{hoveredPoint.x}px; top:{hoveredPoint.y}px;"
+          class="absolute z-20 glass rounded-[var(--radius-sm)] px-2 py-1 text-[10px] font-bold shadow-lg pointer-events-none -translate-x-1/2 -translate-y-full mb-2"
+          style="left:{hoveredPoint.x}px; top:{hoveredPoint.y}px; border-color:var(--border-hi, var(--border));"
         >
           <span style="color:{hoveredPoint.player.avatarColor}">{hoveredPoint.player.name}</span>
           <span class="tx-faint"> · Match #{hoveredPoint.matchIdx}:</span>
@@ -178,12 +181,12 @@
     </div>
 
     <!-- Players Legend Chips -->
-    <div class="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-white/10">
+    <div class="flex flex-wrap items-center justify-center gap-2 pt-2 border-t" style="border-color:var(--border);">
       {#each $players as p}
         <button
-          class="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold transition-all glass {selectedPlayerId ===
+          class="legend-chip flex items-center gap-1.5 px-2 py-1 rounded-[var(--radius-sm)] text-xs font-semibold transition-all active:scale-95 glass {selectedPlayerId ===
           p.id
-            ? 'ring-1 ring-white/40'
+            ? 'is-active'
             : ''}"
           onclick={() => (selectedPlayerId = selectedPlayerId === p.id ? 'all' : p.id)}
         >
@@ -194,3 +197,12 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .legend-chip:hover {
+    background: var(--overlay-1);
+  }
+  .legend-chip.is-active {
+    box-shadow: inset 0 0 0 1px var(--accent-fg);
+  }
+</style>

@@ -24,11 +24,11 @@
     {#each tabs as t}
       {@const on = active === t.id}
       {@const Icon = t.icon}
-      <button class="relative flex flex-col items-center gap-1 py-1.5 rounded-lg transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-fg)]"
+      <button class="tab-btn relative flex flex-col items-center gap-1 py-1.5 rounded-[var(--radius-sm)] active:scale-[0.94] {on ? '' : 'tab-btn--off'}"
               onclick={() => (active = t.id)}
               style="
                 border:none;
-                background:{on ? 'rgba(0,255,135,0.1)' : 'transparent'};
+                background:{on ? 'color-mix(in srgb, var(--accent-fg) 12%, transparent)' : 'transparent'};
                 color:{on ? 'var(--accent-fg)' : 'var(--tx-faint)'};
               ">
         <Icon size={18} strokeWidth={2} />
@@ -37,3 +37,15 @@
     {/each}
   </div>
 </nav>
+
+<style>
+  .tab-btn {
+    transition: background-color 150ms var(--ease-out-smooth), color 150ms var(--ease-out-smooth), transform 150ms var(--ease-spring);
+  }
+  @media (hover: hover) {
+    .tab-btn--off:hover {
+      background: color-mix(in srgb, var(--accent-fg) 7%, transparent) !important;
+      color: var(--accent-fg) !important;
+    }
+  }
+</style>

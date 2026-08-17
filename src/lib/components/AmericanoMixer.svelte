@@ -7,6 +7,28 @@
   import { celebrate } from '../logic/celebrate.js';
   import RoundCard from './RoundCard.svelte';
   import Avatar from './Avatar.svelte';
+  import { Check, Zap, Flag, Trophy, PartyPopper, Loader2 } from '@lucide/svelte';
+
+  // JS equivalents of the CSS --ease-spring / --ease-out-smooth tokens, for use in
+  // Svelte's fly/fade transitions (which take an easing function, not a CSS string).
+  function cubicBezier(x1, y1, x2, y2) {
+    const A = (a1, a2) => 1 - 3 * a2 + 3 * a1;
+    const B = (a1, a2) => 3 * a2 - 6 * a1;
+    const C = (a1) => 3 * a1;
+    const calc = (t, a1, a2) => ((A(a1, a2) * t + B(a1, a2)) * t + C(a1)) * t;
+    const slope = (t, a1, a2) => 3 * A(a1, a2) * t * t + 2 * B(a1, a2) * t + C(a1);
+    return (x) => {
+      let t = x;
+      for (let i = 0; i < 4; i++) {
+        const s = slope(t, x1, x2);
+        if (s === 0) break;
+        t -= (calc(t, x1, x2) - x) / s;
+      }
+      return calc(t, y1, y2);
+    };
+  }
+  const easeSpring = cubicBezier(0.34, 1.56, 0.64, 1);
+  const easeOutSmooth = cubicBezier(0.16, 1, 0.3, 1);
 
   // ---- Setup state ----
   let picked = $state(new Set());
@@ -74,7 +96,7 @@
 
 {#if !$session}
   <!-- ===== SETUP ===== -->
-  <div class="space-y-4" in:fade>
+  <div class="space-y-4" in:fade={{ duration: 200, easing: easeOutSmooth }}>
     <div class="card space-y-1">
       <h3 class="font-display font-bold text-lg neon-text">Americano Mixer</h3>
       <p class="text-sm tx-muted">
@@ -86,19 +108,19 @@
     <div>
       <div class="label flex justify-between">
         <span>Who's playing?</span>
-        <span class="{canStart ? 'neon-text' : 'accent-el'}" style={canStart ? '' : 'color:#ff5e3a;'}>
+        <span class={canStart ? 'neon-text' : 'text-hot'}>
           {picked.size} selected{canStart ? '' : ' · need 4+'}
         </span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         {#each $players as p}
           {@const on = picked.has(p.id)}
-          <button class="glass rounded-xl px-3 py-2.5 flex items-center gap-2 transition"
-                  style="border-color:{on ? p.avatarColor + '77' : 'var(--border)'};{on ? 'box-shadow:0 0 16px -8px ' + p.avatarColor : ''}"
+          <button class="glass rounded-[var(--radius-md)] px-3 py-2.5 flex items-center gap-2 transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                  style="border-color:{on ? p.avatarColor + '77' : 'var(--border)'};{on ? 'box-shadow:0 0 16px -8px ' + p.avatarColor : ''};transition-timing-function:var(--ease-spring);"
                   onclick={() => toggle(p.id)}>
             <Avatar player={p} size={30} />
             <span class="text-sm font-medium truncate {on ? 'tx' : 'tx-faint'}">{p.name}</span>
-            {#if on}<span class="ml-auto text-xs" style="color:{p.avatarColor};">✓</span>{/if}
+            {#if on}<span class="ml-auto" style="color:{p.avatarColor};"><Check size={14} strokeWidth={2.75} /></span>{/if}
           </button>
         {/each}
       </div>
@@ -121,12 +143,16 @@
 
     <button class="btn btn-primary w-full text-lg" disabled={!canStart || generating} onclick={start}
             style={canStart && !generating ? '' : 'opacity:0.5;pointer-events:none;'}>
-      {generating ? '🔄 Mixing…' : '⚡ Generate Schedule'}
+      {#if generating}
+        <Loader2 size={18} strokeWidth={2.25} class="spin-loader" /> Mixing…
+      {:else}
+        <Zap size={18} strokeWidth={2.25} /> Generate Schedule
+      {/if}
     </button>
   </div>
 {:else}
   <!-- ===== LIVE SESSION ===== -->
-  <div class="space-y-4" in:fade>
+  <div class="space-y-4" in:fade={{ duration: 200, easing: easeOutSmooth }}>
     <!-- Progress -->
     <div class="card flex items-center justify-between">
       <div>
@@ -136,7 +162,7 @@
       <button class="btn btn-ghost text-sm" onclick={() => (showFinalize = true)}>Finish ▸</button>
     </div>
     <div class="h-1.5 rounded-full overflow-hidden" style="background:color-mix(in srgb, var(--tx) 12%, transparent);">
-      <div class="h-full bg-[color:var(--accent-fg)] transition-all duration-500"
+      <div class="h-full bg-[color:var(--accent-fg)] transition-all duration-500 [transition-timing-function:var(--ease-out-smooth)]"
            style="width:{totalRounds ? (playedCount / totalRounds) * 100 : 0}%"></div>
     </div>
 
@@ -144,7 +170,7 @@
     <div class="card space-y-2">
       <div class="label !mb-0">Session Leaderboard</div>
       {#each leaderboard as row, i (row.player.id)}
-        <div class="flex items-center gap-2.5" animate:flip={{ duration: 400 }}>
+        <div class="flex items-center gap-2.5" animate:flip={{ duration: 400, easing: easeOutSmooth }}>
           <span class="w-5 text-center font-bold {i === 0 ? 'neon-text' : 'tx-faint'}">{i + 1}</span>
           <Avatar player={row.player} size={30} />
           <span class="flex-1 truncate text-sm font-medium tx">{row.player.name}</span>
@@ -162,21 +188,21 @@
     </div>
 
     <button class="btn btn-primary w-full text-lg" onclick={() => (showFinalize = true)}>
-      🏁 Finalize Session
+      <Flag size={18} strokeWidth={2.25} /> Finalize Session
     </button>
   </div>
 
   <!-- ===== FINALIZE MODAL ===== -->
   {#if showFinalize}
-    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-         transition:fade={{ duration: 150 }}
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm" style="background:var(--scrim);"
+         transition:fade={{ duration: 150, easing: easeOutSmooth }}
          onclick={(e) => { if (e.target === e.currentTarget && !merged) showFinalize = false; }}
          role="presentation">
-      <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-4" transition:fly={{ y: 30, duration: 250 }}
+      <div class="glass rounded-[var(--radius-lg)] p-5 w-full max-w-sm space-y-4" transition:fly={{ y: 30, duration: 250, easing: easeSpring }}
            role="dialog" aria-modal="true" tabindex="-1">
         {#if !merged}
           <div class="text-center space-y-1">
-            <div class="text-4xl">🏆</div>
+            <div class="flex justify-center neon-text"><Trophy size={40} strokeWidth={1.75} /></div>
             <h3 class="font-display font-bold text-lg">Finalize this Americano?</h3>
             <p class="text-sm tx-muted">
               {playedCount} of {totalRounds} rounds have scores. Merge these points into everyone's lifetime stats?
@@ -188,20 +214,20 @@
               <div class="flex items-center gap-2 text-sm">
                 <span>{['🥇', '🥈', '🥉'][i]}</span>
                 <span class="flex-1 truncate">{row.player.name}</span>
-                <span class="font-bold neon-text">{row.points} pts</span>
+                <span class="font-bold neon-text mono">{row.points} pts</span>
               </div>
             {/each}
           </div>
           <div class="grid grid-cols-2 gap-2">
             <button class="btn btn-ghost" onclick={() => (showFinalize = false)}>Keep playing</button>
-            <button class="btn btn-primary" onclick={doMerge}>Merge stats 🎉</button>
+            <button class="btn btn-primary" onclick={doMerge}>Merge stats <PartyPopper size={16} strokeWidth={2.25} /></button>
           </div>
-          <button class="text-xs tx-faint w-full pt-1" onclick={finishAndClose}>
+          <button class="text-xs tx-faint w-full pt-1 transition-colors hover:text-[var(--tx-muted)]" onclick={finishAndClose}>
             Discard session without merging
           </button>
         {:else}
-          <div class="text-center space-y-2 py-2" in:fade>
-            <div class="text-5xl">🎉</div>
+          <div class="text-center space-y-2 py-2" in:fade={{ easing: easeOutSmooth }}>
+            <div class="flex justify-center neon-text"><PartyPopper size={44} strokeWidth={1.75} /></div>
             <h3 class="font-display font-bold text-lg neon-text">Merged!</h3>
             <p class="text-sm tx-muted">Lifetime stats updated. Great session.</p>
             <button class="btn btn-primary w-full mt-2" onclick={finishAndClose}>Done</button>

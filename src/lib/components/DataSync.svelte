@@ -1,5 +1,7 @@
 <script>
   import { fade } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
+  import { Clock, Cloud, CloudOff, CircleCheckBig, TriangleAlert, RefreshCw, Download, Upload } from '@lucide/svelte';
   import { exportState, parseImport } from '../logic/persistence.js';
   import { currentState, replaceState, resetAll } from '../stores/store.js';
   import { syncStatus, syncNow } from '../logic/sync.js';
@@ -13,10 +15,10 @@
   let resetPinError = $state('');
 
   const cloud = $derived({
-    connecting: { icon: '⏳', label: 'Connecting to the group…', tone: 'var(--tx-muted)' },
-    syncing: { icon: '☁️', label: 'Syncing changes…', tone: 'var(--accent-fg)' },
-    synced: { icon: '✅', label: 'Shared live with your group', tone: 'var(--accent-fg)' },
-    local: { icon: '📴', label: 'Local only on this device', tone: '#ff8a3a' },
+    connecting: { icon: Clock, label: 'Connecting to the group…', tone: 'var(--tx-muted)' },
+    syncing: { icon: Cloud, label: 'Syncing changes…', tone: 'var(--accent-fg)' },
+    synced: { icon: CircleCheckBig, label: 'Shared live with your group', tone: 'var(--accent-fg)' },
+    local: { icon: CloudOff, label: 'Local only on this device', tone: 'var(--color-hot)' },
   }[$syncStatus.mode]);
 
   function agoText(ts) {
@@ -51,7 +53,7 @@
       try {
         confirmImport = parseImport(String(reader.result));
       } catch {
-        flash('⚠️ Invalid file — could not import.');
+        flash('Invalid file — could not import.');
       }
     };
     reader.readAsText(file);
@@ -91,7 +93,7 @@
 <div class="space-y-3">
   <!-- Live cloud sync status -->
   <div class="card flex items-center gap-3" style="border-color:color-mix(in srgb, {cloud.tone} 35%, transparent);">
-    <span class="text-2xl">{cloud.icon}</span>
+    <span style="color:{cloud.tone};"><cloud.icon size={22} strokeWidth={2} /></span>
     <div class="min-w-0 flex-1">
       <div class="font-display font-bold text-sm" style="color:{cloud.tone};">{cloud.label}</div>
       <div class="text-xs tx-faint">
@@ -115,23 +117,29 @@
     </p>
   </div>
 
-  <button class="btn btn-primary w-full" onclick={onExport}>⬇️ Export Data (padel_stats.json)</button>
-  <button class="btn btn-ghost w-full" onclick={() => fileInput.click()}>⬆️ Import Data (overwrite)</button>
+  <button class="btn btn-primary w-full" onclick={onExport}>
+    <Download size={15} strokeWidth={2.25} /> Export Data (padel_stats.json)
+  </button>
+  <button class="btn btn-ghost w-full" onclick={() => fileInput.click()}>
+    <Upload size={15} strokeWidth={2.25} /> Import Data (overwrite)
+  </button>
   <input type="file" accept="application/json,.json" class="hidden" bind:this={fileInput} onchange={onFile} />
 
-  <button class="btn btn-ghost w-full text-hot/90" style="border-color:rgba(255,94,58,0.3);"
-          onclick={openReset}>♻️ Reset all stats</button>
+  <button class="btn btn-ghost w-full" style="color:var(--color-hot);border-color:color-mix(in srgb, var(--color-hot) 30%, transparent);"
+          onclick={openReset}>
+    <RefreshCw size={15} strokeWidth={2.25} /> Reset all stats
+  </button>
 
   {#if toast}
     <div class="fixed bottom-24 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-2 text-sm font-medium z-50"
-         transition:fade style="border-color:rgba(16,185,129,0.4);">{toast}</div>
+         transition:fade={{ easing: cubicOut }} style="border-color:color-mix(in srgb, var(--accent-fg) 40%, transparent);">{toast}</div>
   {/if}
 
   <!-- Import confirm -->
   {#if confirmImport}
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" transition:fade>
-      <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center">
-        <div class="text-3xl">⚠️</div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style="background:var(--scrim);" transition:fade={{ easing: cubicOut }}>
+      <div class="glass rounded-[var(--radius-lg)] p-5 w-full max-w-sm space-y-3 text-center">
+        <div class="flex justify-center" style="color:var(--color-hot);"><TriangleAlert size={30} strokeWidth={2} /></div>
         <h3 class="font-display font-bold">Overwrite local data?</h3>
         <p class="text-sm tx-muted">
           This replaces your current stats with the imported file
@@ -147,17 +155,17 @@
 
   <!-- Reset confirm -->
   {#if confirmReset}
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" transition:fade>
-      <div class="glass rounded-3xl p-5 w-full max-w-sm space-y-3 text-center">
-        <div class="text-3xl">♻️</div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style="background:var(--scrim);" transition:fade={{ easing: cubicOut }}>
+      <div class="glass rounded-[var(--radius-lg)] p-5 w-full max-w-sm space-y-3 text-center">
+        <div class="flex justify-center" style="color:var(--color-hot);"><RefreshCw size={30} strokeWidth={2} /></div>
         <h3 class="font-display font-bold">Reset everything?</h3>
         <p class="text-sm tx-muted">Wipes all matches and stats back to the 6 original players. Can't be undone.</p>
         <input class="input text-center" type="password" inputmode="numeric" placeholder="Enter PIN" autocomplete="off"
                bind:value={resetPin} onkeydown={(e) => e.key === 'Enter' && doReset()} />
-        {#if resetPinError}<p class="text-sm text-hot">{resetPinError}</p>{/if}
+        {#if resetPinError}<p class="text-sm" style="color:var(--color-hot);">{resetPinError}</p>{/if}
         <div class="grid grid-cols-2 gap-2">
           <button class="btn btn-ghost" onclick={closeReset}>Cancel</button>
-          <button class="btn btn-primary" style="background:linear-gradient(180deg,#ff8a6a,#ff5e3a);" onclick={doReset}>Reset</button>
+          <button class="btn btn-primary" style="background:linear-gradient(180deg, color-mix(in srgb, var(--color-hot) 70%, white 20%), var(--color-hot));" onclick={doReset}>Reset</button>
         </div>
       </div>
     </div>

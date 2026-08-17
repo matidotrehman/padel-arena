@@ -3,6 +3,7 @@
   import { players, logFixedMatch, logIndividualMatch } from '../stores/store.js';
   import { pop } from '../logic/celebrate.js';
   import Avatar from './Avatar.svelte';
+  import { X, Trophy, Volleyball, Check } from '@lucide/svelte';
 
   let mode = $state('fixed'); // 'fixed' | 'individual'
 
@@ -74,12 +75,12 @@
 
 <div class="space-y-4">
   <!-- Mode toggle -->
-  <div class="glass rounded-xl p-1 grid grid-cols-2 gap-1">
+  <div class="glass rounded-[var(--radius-md)] p-1 grid grid-cols-2 gap-1">
     <button
-      class="btn {mode === 'fixed' ? 'btn-primary' : 'tx-muted'}"
+      class="btn {mode === 'fixed' ? 'btn-primary' : 'tx-muted hover:text-[var(--tx)]'}"
       onclick={() => (mode = 'fixed')}>Fixed Partners</button>
     <button
-      class="btn {mode === 'individual' ? 'btn-primary' : 'tx-muted'}"
+      class="btn {mode === 'individual' ? 'btn-primary' : 'tx-muted hover:text-[var(--tx)]'}"
       onclick={() => (mode = 'individual')}>Individual</button>
   </div>
 
@@ -87,7 +88,7 @@
     <div class="space-y-4" in:fly={{ y: 12, duration: 200 }}>
       <!-- Teams -->
       <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-        <div class="card space-y-2" style="border-color:rgba(16,185,129,0.25);">
+        <div class="card space-y-2" style="border-color:color-mix(in srgb, var(--accent-fg) 25%, transparent);">
           <div class="label !mb-0 neon-text">Team A</div>
           {#each [{ get: () => a1, set: (v) => (a1 = v) }, { get: () => a2, set: (v) => (a2 = v) }] as slot}
             <select class="input" value={slot.get()} onchange={(e) => slot.set(e.target.value)}>
@@ -97,8 +98,8 @@
           {/each}
         </div>
         <div class="font-display font-bold tx-faint text-sm">VS</div>
-        <div class="card space-y-2" style="border-color:rgba(34,224,200,0.25);">
-          <div class="label !mb-0" style="color:#22e0c8;">Team B</div>
+        <div class="card space-y-2" style="border-color:color-mix(in srgb, var(--accent-fg) 25%, transparent);">
+          <div class="label !mb-0 neon-text">Team B</div>
           {#each [{ get: () => b1, set: (v) => (b1 = v) }, { get: () => b2, set: (v) => (b2 = v) }] as slot}
             <select class="input" value={slot.get()} onchange={(e) => slot.set(e.target.value)}>
               <option value="">Select…</option>
@@ -114,11 +115,15 @@
         {#each sets as set, i}
           <div class="flex items-center gap-2" in:fly={{ y: 8, duration: 150 }}>
             <span class="text-xs tx-faint w-10">Set {i + 1}</span>
-            <input class="input text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
+            <input class="input mono text-center" type="number" min="0" placeholder="A" bind:value={set.a} />
             <span class="tx-faint">—</span>
-            <input class="input text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
+            <input class="input mono text-center" type="number" min="0" placeholder="B" bind:value={set.b} />
             {#if sets.length > 1}
-              <button class="tx-muted hover:text-hot px-2" onclick={() => removeSet(i)} aria-label="Remove set">✕</button>
+              <button class="tx-muted hover:text-hot px-2 transition-transform duration-150 hover:scale-110 active:scale-90"
+                      style="transition-timing-function: var(--ease-spring);"
+                      onclick={() => removeSet(i)} aria-label="Remove set">
+                <X size={14} strokeWidth={2.25} />
+              </button>
             {/if}
           </div>
         {/each}
@@ -127,7 +132,7 @@
 
       <button class="btn btn-primary w-full text-lg" disabled={!fixedValid} onclick={submitFixed}
         style={fixedValid ? '' : 'opacity:0.4;pointer-events:none;'}>
-        🎾 Log Match
+        <Volleyball size={18} strokeWidth={2.25} /> Log Match
       </button>
     </div>
   {:else}
@@ -138,23 +143,28 @@
       <div class="space-y-2">
         {#each $players as p}
           {@const active = selected[p.id]}
-          <div class="glass rounded-xl px-3 py-2.5 flex items-center gap-3 transition"
+          <div class="glass rounded-[var(--radius-md)] px-3 py-2.5 flex items-center gap-3 transition"
                style="border-color:{active ? p.avatarColor + '55' : 'var(--border)'};">
-            <button class="flex items-center gap-3 flex-1 min-w-0" onclick={() => toggleSelect(p.id)}>
-              <span class="w-5 h-5 rounded-md border flex items-center justify-center text-xs shrink-0"
+            <button class="flex items-center gap-3 flex-1 min-w-0 py-1 transition-transform duration-150 active:scale-[0.98]"
+                    style="transition-timing-function: var(--ease-spring);"
+                    onclick={() => toggleSelect(p.id)}>
+              <span class="w-5 h-5 rounded-[var(--radius-sm)] border flex items-center justify-center text-xs shrink-0 transition"
                     style="border-color:{p.avatarColor}88;background:{active ? p.avatarColor : 'transparent'};color:#0a0a0b;">
-                {active ? '✓' : ''}
+                {#if active}<Check size={12} strokeWidth={3} />{/if}
               </span>
               <Avatar player={p} size={34} />
               <span class="font-medium truncate {active ? 'tx' : 'tx-faint'}">{p.name}</span>
             </button>
             {#if active}
               <div class="flex items-center gap-2" in:fade={{ duration: 150 }}>
-                <input class="input w-16 text-center py-1.5" type="number" min="0" placeholder="pts"
+                <input class="input mono w-16 text-center py-1.5" type="number" min="0" placeholder="pts"
                        bind:value={points[p.id]} />
-                <button class="text-xl transition {winners[p.id] ? '' : 'opacity-30 grayscale'}"
+                <button class="transition-transform duration-150 hover:scale-110 active:scale-90 {winners[p.id] ? 'neon-text' : 'tx-faint opacity-30 grayscale'}"
+                        style="transition-timing-function: var(--ease-spring);"
                         onclick={() => (winners = { ...winners, [p.id]: !winners[p.id] })}
-                        aria-label="Mark winner">🏆</button>
+                        aria-label="Mark winner">
+                  <Trophy size={20} strokeWidth={2.25} />
+                </button>
               </div>
             {/if}
           </div>
@@ -162,7 +172,7 @@
       </div>
       <button class="btn btn-primary w-full text-lg" disabled={!indValid} onclick={submitIndividual}
         style={indValid ? '' : 'opacity:0.4;pointer-events:none;'}>
-        🎾 Log Individual Match
+        <Volleyball size={18} strokeWidth={2.25} /> Log Individual Match
       </button>
     </div>
   {/if}

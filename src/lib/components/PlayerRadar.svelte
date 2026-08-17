@@ -1,4 +1,5 @@
 <script>
+  import { Radar as RadarIcon } from '@lucide/svelte';
   import { players } from '../stores/store.js';
   import { filteredMatches } from '../stores/analytics.js';
   import { computeRadarMetrics } from '../logic/analyticsEngine.js';
@@ -57,7 +58,7 @@
   <div class="flex items-center justify-between gap-2">
     <div>
       <h3 class="font-display font-bold neon-text text-base flex items-center gap-1.5">
-        <span>🎯</span> Player Radar Attributes
+        <RadarIcon size={16} strokeWidth={2.25} /> Player Radar Attributes
       </h3>
       <p class="text-xs tx-muted">5-axis skill breakdown &amp; dual-player comparison</p>
     </div>
@@ -95,7 +96,7 @@
         </filter>
         <linearGradient id="p1-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="var(--accent-fg)" stop-opacity="0.45" />
-          <stop offset="100%" stop-color="#22e0c8" stop-opacity="0.25" />
+          <stop offset="100%" stop-color="var(--accent-fg)" stop-opacity="0.2" />
         </linearGradient>
       </defs>
 
@@ -107,7 +108,7 @@
             return `${x.toFixed(1)},${y.toFixed(1)}`;
           }).join(' ')}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.08)"
+          stroke="var(--border)"
           stroke-width="1"
           stroke-dasharray={pct === 1 ? 'none' : '2,2'}
         />
@@ -121,7 +122,7 @@
           y1={CY}
           x2={outer.x}
           y2={outer.y}
-          stroke="rgba(255, 255, 255, 0.12)"
+          stroke="color-mix(in srgb, var(--tx) 14%, transparent)"
           stroke-width="1"
         />
         <!-- Axis Labels -->
@@ -129,7 +130,7 @@
         <text
           x={labelPos.x}
           y={labelPos.y}
-          fill="var(--tx-muted, #94a3b8)"
+          fill="var(--tx-muted)"
           font-size="10"
           font-weight="600"
           font-family="system-ui"
@@ -144,14 +145,14 @@
       {#if metrics2}
         <path
           d={getPolygonPath(metrics2)}
-          fill="rgba(56, 189, 248, 0.2)"
-          stroke="#38bdf8"
+          fill="color-mix(in srgb, var(--color-ice) 20%, transparent)"
+          stroke="var(--color-ice)"
           stroke-width="2.5"
           stroke-linejoin="round"
         />
         {#each axes as ax, idx}
           {@const pt = getCoordinates(idx, metrics2[ax.key] ?? 50)}
-          <circle cx={pt.x} cy={pt.y} r="3.5" fill="#38bdf8" stroke="#0f172a" stroke-width="1.5" />
+          <circle cx={pt.x} cy={pt.y} r="3.5" fill="var(--color-ice)" stroke="var(--page-solid)" stroke-width="1.5" />
         {/each}
       {/if}
 
@@ -172,7 +173,7 @@
             cy={pt.y}
             r="4"
             fill="var(--accent-fg)"
-            stroke="#0f172a"
+            stroke="var(--page-solid)"
             stroke-width="1.5"
           />
         {/each}
@@ -181,10 +182,10 @@
   </div>
 
   <!-- Legend & Value Breakdown -->
-  <div class="space-y-2 pt-2 border-t border-white/10">
+  <div class="space-y-2 pt-2 border-t" style="border-color:var(--border);">
     <div class="grid grid-cols-5 gap-1.5 text-center">
       {#each axes as ax}
-        <div class="glass rounded-lg p-1.5 flex flex-col items-center">
+        <div class="glass rounded-[var(--radius-sm)] p-1.5 flex flex-col items-center">
           <span class="text-[9px] tx-faint font-bold uppercase truncate max-w-full">{ax.key}</span>
           <div class="flex items-center gap-1 mt-0.5">
             {#if metrics1}
@@ -192,7 +193,7 @@
             {/if}
             {#if metrics2}
               <span class="text-[10px] tx-faint">/</span>
-              <span class="mono text-xs font-bold text-sky-400">{metrics2[ax.key]}</span>
+              <span class="mono text-xs font-bold" style="color:var(--color-ice);">{metrics2[ax.key]}</span>
             {/if}
           </div>
         </div>
@@ -210,7 +211,7 @@
       {#if player2}
         <div class="flex items-center gap-1.5">
           <Avatar player={player2} size={18} />
-          <span class="text-sky-400 font-bold">{player2.name}</span>
+          <span class="font-bold" style="color:var(--color-ice);">{player2.name}</span>
         </div>
       {/if}
     </div>

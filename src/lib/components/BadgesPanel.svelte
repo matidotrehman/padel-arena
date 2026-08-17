@@ -38,12 +38,17 @@
       <p class="text-sm tx-muted">Every player's own tier, judged on their rating — not the group.</p>
     </div>
     <div class="space-y-1.5">
-      {#each tiers as row (row.player.id)}
-        <div class="glass rounded-xl px-3 py-2 flex items-center gap-2.5">
+      {#each tiers as row, i (row.player.id)}
+        {@const TierIcon = row.tier.icon}
+        <div
+          class="tier-row glass rounded-[var(--radius-md)] px-3 py-2 flex items-center gap-2.5"
+          in:fly={{ y: 10, duration: 200, delay: i * 40 }}
+        >
           <Avatar player={row.player} size={30} />
           <span class="flex-1 truncate text-sm font-medium tx">{row.player.name}</span>
-          <span class="chip !px-2 !py-1" style="background:{row.tier.accent}22;color:{row.tier.accent};">
-            {row.tier.icon} {row.tier.title}
+          <span class="chip !px-2 !py-1 items-center gap-1" style="background:{row.tier.accent}22;color:{row.tier.accent};">
+            <TierIcon size={12} strokeWidth={2.25} />
+            {row.tier.title}
           </span>
           <span class="mono text-xs tx-faint w-8 text-right">{row.tier.value}</span>
         </div>
@@ -53,3 +58,15 @@
 
   <AchievementsPanel />
 </div>
+
+<style>
+  .tier-row {
+    transition: background-color 180ms var(--ease-out-smooth), transform 180ms var(--ease-spring);
+  }
+  .tier-row:hover {
+    background: var(--overlay-1);
+  }
+  .tier-row:active {
+    transform: scale(0.99);
+  }
+</style>

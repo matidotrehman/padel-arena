@@ -1,11 +1,12 @@
 // Personal Milestone & Achievement Engine for Padel Arena.
 
 import { winRate, pointDiff, currentStreak } from './stats.js';
+import { Volleyball, Trophy, Flame, Zap, Hash, Handshake, Target, Crown, Shield, TrendingUp } from '@lucide/svelte';
 
 export const ACHIEVEMENTS = [
   {
     id: 'first_match',
-    icon: '🎾',
+    icon: Volleyball,
     title: 'First Blood',
     description: 'Play your first padel match.',
     category: 'milestone',
@@ -13,7 +14,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'first_win',
-    icon: '🏆',
+    icon: Trophy,
     title: "Winner's Circle",
     description: 'Win your first padel match.',
     category: 'milestone',
@@ -21,7 +22,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'win_streak_3',
-    icon: '🔥',
+    icon: Flame,
     title: 'On Fire',
     description: 'Achieve a 3-match win streak.',
     category: 'streak',
@@ -33,7 +34,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'win_streak_5',
-    icon: '⚡',
+    icon: Zap,
     title: 'Unstoppable',
     description: 'Achieve a 5-match win streak.',
     category: 'streak',
@@ -45,7 +46,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'century_club',
-    icon: '💯',
+    icon: Hash,
     title: 'Century Club',
     description: 'Score 100+ lifetime points.',
     category: 'points',
@@ -57,7 +58,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'the_diplomat',
-    icon: '🤝',
+    icon: Handshake,
     title: 'The Diplomat',
     description: 'Partner with all 5 other friends in the group.',
     category: 'social',
@@ -96,7 +97,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'clutch_master',
-    icon: '🎯',
+    icon: Target,
     title: 'Clutch Master',
     description: 'Win 3 close matches decided by 2 points or less.',
     category: 'skill',
@@ -122,7 +123,7 @@ export const ACHIEVEMENTS = [
   },
   {
     id: 'king_of_hill',
-    icon: '👑',
+    icon: Crown,
     title: 'King of the Hill',
     description: 'Reach rank #1 on the leaderboard.',
     category: 'rank',
@@ -133,13 +134,13 @@ export const ACHIEVEMENTS = [
       return {
         unlocked: rank === 1,
         progress: rank === 1 ? 1 : 0.5,
-        label: rank === 1 ? 'Rank #1 👑' : `Current Rank #${rank}`,
+        label: rank === 1 ? 'Rank #1' : `Current Rank #${rank}`,
       };
     },
   },
   {
     id: 'iron_wall',
-    icon: '🛡️',
+    icon: Shield,
     title: 'Iron Wall',
     description: 'Concede 5 or fewer points in a match.',
     category: 'skill',
@@ -156,12 +157,12 @@ export const ACHIEVEMENTS = [
           if (conceded <= 5 && m.matchesPlayed !== 0) achieved = true;
         }
       }
-      return { unlocked: achieved, progress: achieved ? 1 : 0, label: achieved ? 'Achieved 🛡️' : '0/1 match' };
+      return { unlocked: achieved, progress: achieved ? 1 : 0, label: achieved ? 'Achieved' : '0/1 match' };
     },
   },
   {
     id: 'escaped_spoon',
-    icon: '🧹',
+    icon: TrendingUp,
     title: 'Escaped the Spoon',
     description: 'Climb out of last place after playing 3+ matches.',
     category: 'rank',

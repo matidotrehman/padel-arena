@@ -1,4 +1,6 @@
 <script>
+  import { fly } from 'svelte/transition';
+  import { FlaskConical, Flame, Snowflake } from '@lucide/svelte';
   import { players } from '../stores/store.js';
   import { filteredMatches } from '../stores/analytics.js';
   import { computeChemistry } from '../logic/chemistry.js';
@@ -15,14 +17,17 @@
 
   {#if !chem.ranked.length}
     <div class="card text-center py-8 tx-muted">
-      <div class="text-4xl mb-2">🧪</div>
+      <div class="flex justify-center mb-2 tx-faint"><FlaskConical size={32} strokeWidth={1.75} /></div>
       <p class="font-semibold tx">Not enough partnered games yet</p>
       <p class="text-sm">Pairs need at least 2 games together to show up here.</p>
     </div>
   {:else}
     <div class="space-y-1.5">
-      {#each chem.ranked as p (p.a.id + p.b.id)}
-        <div class="glass rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+      {#each chem.ranked as p, i (p.a.id + p.b.id)}
+        <div
+          class="chem-row glass rounded-[var(--radius-md)] px-3 py-2.5 flex items-center gap-2.5"
+          in:fly={{ y: 10, duration: 200, delay: i * 40 }}
+        >
           <div class="flex items-center -space-x-2 shrink-0">
             <Avatar player={p.a} size={30} />
             <Avatar player={p.b} size={30} />
@@ -32,9 +37,13 @@
             <div class="text-[11px] tx-faint mono">{p.wins}W {p.losses}L · {p.games} games</div>
           </div>
           {#if chem.best.includes(p)}
-            <span class="chip" style="background:color-mix(in srgb, var(--accent-fg) 16%, transparent);color:var(--accent-fg);">🔥 Unstoppable</span>
+            <span class="chip items-center gap-1" style="background:color-mix(in srgb, var(--accent-fg) 16%, transparent);color:var(--accent-fg);">
+              <Flame size={11} strokeWidth={2.25} /> Unstoppable
+            </span>
           {:else if chem.worst.includes(p)}
-            <span class="chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;">🧊 Toxic</span>
+            <span class="chip items-center gap-1" style="background:color-mix(in srgb, var(--color-ice) 18%, transparent);color:var(--color-ice);">
+              <Snowflake size={11} strokeWidth={2.25} /> Toxic
+            </span>
           {/if}
           <span class="mono font-bold text-lg tx shrink-0">{p.winRate}%</span>
         </div>
@@ -48,3 +57,15 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .chem-row {
+    transition: background-color 180ms var(--ease-out-smooth), transform 180ms var(--ease-spring);
+  }
+  .chem-row:hover {
+    background: var(--overlay-1);
+  }
+  .chem-row:active {
+    transform: scale(0.99);
+  }
+</style>

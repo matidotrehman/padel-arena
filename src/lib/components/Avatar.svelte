@@ -1,5 +1,5 @@
 <script>
-  let { player, size = 40 } = $props();
+  let { player, size = 40, interactive = false } = $props();
 
   const DEFAULT_ICONS = ['🦁', '🦅', '🐺', '🐆', '🦈', '🦍', '🐉', '🦊', '🐍', '🐂', '⚡', '👑'];
 
@@ -16,7 +16,7 @@
 </script>
 
 <div
-  class="flex items-center justify-center rounded-full shrink-0 relative select-none"
+  class="avatar flex items-center justify-center rounded-full shrink-0 relative select-none {interactive ? 'avatar--interactive' : ''}"
   style="
     width:{size}px;height:{size}px;
     font-size:{size * 0.5}px;
@@ -26,3 +26,17 @@
 >
   <span class="leading-none">{icon}</span>
 </div>
+
+<style>
+  .avatar {
+    transition: transform 200ms var(--ease-spring);
+  }
+  .avatar--interactive:active {
+    transform: scale(0.96);
+  }
+  @media (hover: hover) {
+    .avatar--interactive:hover {
+      transform: scale(1.05);
+    }
+  }
+</style>

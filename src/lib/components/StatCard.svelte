@@ -14,7 +14,7 @@
 </script>
 
 <div
-  class="rounded-lg px-3 py-2.5 flex flex-col gap-1.5"
+  class="rounded-[var(--radius-md)] px-3 py-2.5 flex flex-col gap-1.5"
   style="
     background:color-mix(in srgb, var(--surface-1) 82%, transparent);
     backdrop-filter:blur(8px);

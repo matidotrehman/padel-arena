@@ -24,21 +24,21 @@
 <button
   type="button"
   onclick={() => onselect?.(player)}
-  class="relative w-full text-left transition active:scale-[0.99] rounded-lg p-3.5 flex items-center gap-3"
+  class="player-row relative w-full text-left active:scale-[0.99] rounded-[var(--radius-md)] p-3.5 flex items-center gap-3"
   style="
     background:var(--surface-1);
     border-top:1px solid var(--border);
     border-right:1px solid var(--border);
     border-bottom:1px solid var(--border);
     border-left:3px solid {stripe};
-    box-shadow:{isTop ? '0 0 0 1px color-mix(in srgb, var(--accent-fg) 25%, transparent), 0 0 16px color-mix(in srgb, var(--accent-fg) 30%, transparent)' : 'var(--shadow-card)'};
+    box-shadow:{isTop ? 'var(--shadow-card-accent)' : 'var(--shadow-card)'};
   "
 >
   <div class="flex items-center justify-center shrink-0" style="width:20px;min-height:38px;">
     <span class="mono font-bold text-[13px] leading-none" style="color:{numberColor};">{rank}</span>
   </div>
 
-  <Avatar {player} size={38} />
+  <Avatar {player} size={38} interactive />
 
   <div class="min-w-0 flex-1">
     <div class="font-semibold truncate tx text-[14px] leading-tight">{player.name}</div>
@@ -49,7 +49,7 @@
       <span class="tx-faint">·</span>
       <span>{player.pointsWon}pts</span>
       <span class="tx-faint">·</span>
-      <span style="color:{diff >= 0 ? 'var(--accent-fg)' : '#DC2626'};">{diff >= 0 ? '+' : ''}{diff}</span>
+      <span style="color:{diff >= 0 ? 'var(--accent-fg)' : 'var(--color-hot)'};">{diff >= 0 ? '+' : ''}{diff}</span>
     </div>
     {#if chips.length}
       <div class="flex flex-wrap items-center gap-1 mt-1 max-w-full" style="padding-right:12px;">
@@ -74,3 +74,25 @@
     </div>
   </div>
 </button>
+
+<style>
+  .player-row {
+    transition: transform 200ms var(--ease-spring), box-shadow 150ms var(--ease-out-smooth), border-color 150ms var(--ease-out-smooth);
+  }
+  .player-row::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--overlay-1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms var(--ease-out-smooth);
+  }
+  @media (hover: hover) {
+    .player-row:hover::after {
+      opacity: 1;
+    }
+  }
+</style>
+
