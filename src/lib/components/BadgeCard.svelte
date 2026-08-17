@@ -6,26 +6,25 @@
 
 <!-- Static card — all info shown at once (no flip, so nothing can overlap). -->
 {#if hero}
-  <div
-    class="badge-card card h-full flex items-center gap-4 relative overflow-hidden rounded-[var(--radius-md)]"
-    style="--acc:{badge.accent}; border-color:color-mix(in srgb, var(--acc) 35%, transparent); box-shadow:0 0 30px -16px var(--acc);"
-  >
-    <div class="absolute -right-8 -top-10 w-28 h-28 rounded-full blur-3xl opacity-30" style="background:{badge.accent};"></div>
-    <div class="shrink-0 relative z-10" style="filter:drop-shadow(0 0 10px color-mix(in srgb, var(--acc) 65%, transparent));">
-      <Icon size={40} strokeWidth={2} color={badge.accent} />
-    </div>
-    <div class="min-w-0 flex-1 relative z-10">
-      <div class="font-display font-bold text-base leading-tight accent-el" style="color:{badge.accent};">{badge.title}</div>
-      <p class="text-[11px] tx-faint leading-snug mt-0.5">{badge.blurb}</p>
-      {#if badge.winner}
-        <div class="flex items-center gap-2 mt-2">
-          <Avatar player={badge.winner} size={30} />
-          <span class="text-sm font-semibold tx truncate">{badge.winner.name}</span>
-          <span class="chip accent-el ml-auto mono" style="background:{badge.accent}22;color:{badge.accent};">{badge.value}</span>
-        </div>
-      {:else}
-        <div class="chip tx-faint mt-2" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Up for grabs</div>
-      {/if}
+  <div class="badge-card-shell hero-shell h-full" style="--acc:{badge.accent}; --hero-accent:{badge.accent}; --hero-shadow:0 10px 26px -16px color-mix(in srgb, {badge.accent} 45%, transparent);">
+    <div class="badge-card hero-shell-inner h-full flex items-center gap-4 relative overflow-hidden p-4">
+      <div class="absolute -right-8 -top-10 w-28 h-28 rounded-full blur-3xl opacity-30" style="background:{badge.accent};"></div>
+      <div class="shrink-0 relative z-10" style="filter:drop-shadow(0 0 10px color-mix(in srgb, {badge.accent} 65%, transparent));">
+        <Icon size={40} strokeWidth={1.75} color={badge.accent} />
+      </div>
+      <div class="min-w-0 flex-1 relative z-10">
+        <div class="h-display font-bold text-lg leading-tight accent-el" style="color:{badge.accent};">{badge.title}</div>
+        <p class="text-[11px] tx-faint leading-snug mt-0.5">{badge.blurb}</p>
+        {#if badge.winner}
+          <div class="flex items-center gap-2 mt-2">
+            <Avatar player={badge.winner} size={30} />
+            <span class="text-sm font-semibold tx truncate">{badge.winner.name}</span>
+            <span class="chip accent-el ml-auto mono" style="background:color-mix(in srgb, {badge.accent} 14%, transparent);color:{badge.accent};">{badge.value}</span>
+          </div>
+        {:else}
+          <div class="chip tx-faint mt-2" style="background:color-mix(in srgb, var(--tx) 7%, transparent);">Up for grabs</div>
+        {/if}
+      </div>
     </div>
   </div>
 {:else}

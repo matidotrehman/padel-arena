@@ -9,10 +9,10 @@ import { fixedOutcome } from '../stores/store.js';
 import { Crown, Flame, Shield, Handshake, Construction, Snowflake, TrendingUpDown, Hammer, Gem, Trophy, Medal, Award } from '@lucide/svelte';
 
 export const BADGE_DEFS = [
-  { key: 'el-rey', title: 'El Rey', icon: Crown, blurb: '#1 on the leaderboard', accent: '#FFD700' },
+  { key: 'el-rey', title: 'El Rey', icon: Crown, blurb: '#1 on the leaderboard', accent: '#C9A227' },
   { key: 'on-fire', title: 'On Fire', icon: Flame, blurb: '3+ match win streak in a single session', accent: '#F97316' },
-  { key: 'brick-wall', title: 'Brick Wall', icon: Shield, blurb: 'Best point differential', accent: '#10B981' },
-  { key: 'ideal-partner', title: 'Ideal Partner', icon: Handshake, blurb: 'Best win rate across different teammates', accent: '#34D399' },
+  { key: 'brick-wall', title: 'Brick Wall', icon: Shield, blurb: 'Best point differential', accent: '#2BB37E' },
+  { key: 'ideal-partner', title: 'Ideal Partner', icon: Handshake, blurb: 'Best win rate across different teammates', accent: '#3ECF96' },
   { key: 'under-construction', title: 'Under Construction', icon: Construction, blurb: 'Bottom of the leaderboard', accent: '#F59E0B' },
   { key: 'ice-cold', title: 'Ice Cold', icon: Snowflake, blurb: '3+ match losing streak in a single session', accent: '#38BDF8' },
   { key: 'rollercoaster', title: 'Rollercoaster', icon: TrendingUpDown, blurb: 'Wins big, loses big — highest score variance', accent: '#A78BFA' },

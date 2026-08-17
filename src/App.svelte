@@ -64,10 +64,10 @@
       </div>
       <p class="text-[10px] tx-faint tracking-[0.2em] uppercase ml-[40px] mt-1 font-semibold truncate">{titles[active]}</p>
     </div>
-    <div class="flex items-center gap-1 shrink-0 rounded-[var(--radius-sm)] pl-2.5 pr-1 py-1"
-         style="background:var(--surface-1);border:1px solid var(--border);">
+    <div class="hero-shell hero-shell-gold shrink-0" style="padding:1.5px;">
+    <div class="hero-shell-inner flex items-center gap-1 pl-2.5 pr-1 py-1">
       <div class="min-w-0 max-w-[96px]">
-        <div class="text-[8px] uppercase tracking-[0.14em] tx-faint font-bold leading-none">Top</div>
+        <div class="text-[8px] uppercase tracking-[0.14em] font-bold leading-none" style="color:var(--accent-gold);">Top</div>
         <div class="h-display font-bold text-[12px] tx truncate leading-tight">{leader ? leader.name : '—'}</div>
       </div>
       <span class="w-px h-6 shrink-0" style="background:var(--border);"></span>
@@ -84,6 +84,7 @@
           </span>
         {/if}
       </button>
+    </div>
     </div>
   </header>
 

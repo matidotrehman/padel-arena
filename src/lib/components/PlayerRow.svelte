@@ -14,25 +14,26 @@
   const visibleChips = $derived(chips.slice(0, 2));
   const extraChips = $derived(chips.length - visibleChips.length);
 
-  const NUMBER_COLOR = { 1: '#FACC15', 2: '#CBD5E1', 3: '#D97706' };
-  const STRIPE_COLOR = { 1: 'var(--accent-fg)', 2: '#CBD5E1', 3: '#D97706' };
+  const NUMBER_COLOR = { 1: 'var(--accent-gold)', 2: '#CBD5E1', 3: '#D97706' };
+  const STRIPE_COLOR = { 1: 'var(--accent-gold)', 2: '#CBD5E1', 3: '#D97706' };
   const numberColor = $derived(NUMBER_COLOR[rank] || 'var(--tx-faint)');
   const stripe = $derived(STRIPE_COLOR[rank] || 'var(--border)');
   const isTop = $derived(rank === 1);
 </script>
 
+<div class={isTop ? 'hero-shell hero-shell-gold' : ''}>
 <button
   type="button"
   onclick={() => onselect?.(player)}
-  class="player-row relative w-full text-left active:scale-[0.99] rounded-[var(--radius-md)] p-3.5 flex items-center gap-3"
-  style="
-    background:var(--surface-1);
-    border-top:1px solid var(--border);
-    border-right:1px solid var(--border);
-    border-bottom:1px solid var(--border);
-    border-left:3px solid {stripe};
-    box-shadow:{isTop ? 'var(--shadow-card-accent)' : 'var(--shadow-card)'};
-  "
+  class="player-row relative w-full text-left active:scale-[0.99] rounded-[var(--radius-md)] p-3.5 flex items-center gap-3 {isTop ? 'hero-shell-inner' : ''}"
+  style={isTop
+    ? `border-left:3px solid ${stripe};`
+    : `background:var(--surface-1);
+       border-top:1px solid var(--border);
+       border-right:1px solid var(--border);
+       border-bottom:1px solid var(--border);
+       border-left:3px solid ${stripe};
+       box-shadow:var(--shadow-card);`}
 >
   <div class="flex items-center justify-center shrink-0" style="width:20px;min-height:38px;">
     <span class="mono font-bold text-[13px] leading-none" style="color:{numberColor};">{rank}</span>
@@ -74,6 +75,7 @@
     </div>
   </div>
 </button>
+</div>
 
 <style>
   .player-row {

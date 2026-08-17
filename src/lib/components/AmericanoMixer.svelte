@@ -202,8 +202,12 @@
            role="dialog" aria-modal="true" tabindex="-1">
         {#if !merged}
           <div class="text-center space-y-1">
-            <div class="flex justify-center neon-text"><Trophy size={40} strokeWidth={1.75} /></div>
-            <h3 class="font-display font-bold text-lg">Finalize this Americano?</h3>
+            <div class="hero-shell hero-shell-gold inline-block mx-auto" style="padding:2px;border-radius:999px;">
+              <div class="hero-shell-inner grid place-items-center" style="width:64px;height:64px;border-radius:999px;color:var(--accent-gold);">
+                <Trophy size={30} strokeWidth={1.75} />
+              </div>
+            </div>
+            <h3 class="h-display font-bold text-lg">Finalize this Americano?</h3>
             <p class="text-sm tx-muted">
               {playedCount} of {totalRounds} rounds have scores. Merge these points into everyone's lifetime stats?
             </p>
@@ -211,10 +215,11 @@
           <!-- Podium preview -->
           <div class="space-y-1.5">
             {#each leaderboard.slice(0, 3) as row, i}
-              <div class="flex items-center gap-2 text-sm">
+              <div class="flex items-center gap-2 text-sm {i === 0 ? 'rounded-[var(--radius-sm)] px-2 py-1 -mx-2' : ''}"
+                   style={i === 0 ? 'background:color-mix(in srgb, var(--accent-gold) 10%, transparent);' : ''}>
                 <span>{['🥇', '🥈', '🥉'][i]}</span>
-                <span class="flex-1 truncate">{row.player.name}</span>
-                <span class="font-bold neon-text mono">{row.points} pts</span>
+                <span class="flex-1 truncate" style={i === 0 ? 'color:var(--accent-gold);font-weight:600;' : ''}>{row.player.name}</span>
+                <span class="font-bold mono" style="color:{i === 0 ? 'var(--accent-gold)' : 'var(--accent-fg)'};">{row.points} pts</span>
               </div>
             {/each}
           </div>
@@ -227,8 +232,12 @@
           </button>
         {:else}
           <div class="text-center space-y-2 py-2" in:fade={{ easing: easeOutSmooth }}>
-            <div class="flex justify-center neon-text"><PartyPopper size={44} strokeWidth={1.75} /></div>
-            <h3 class="font-display font-bold text-lg neon-text">Merged!</h3>
+            <div class="hero-shell hero-shell-gold inline-block mx-auto" style="padding:2px;border-radius:999px;">
+              <div class="hero-shell-inner grid place-items-center" style="width:72px;height:72px;border-radius:999px;color:var(--accent-gold);">
+                <PartyPopper size={36} strokeWidth={1.75} />
+              </div>
+            </div>
+            <h3 class="h-display font-bold text-lg" style="color:var(--accent-gold);">Merged!</h3>
             <p class="text-sm tx-muted">Lifetime stats updated. Great session.</p>
             <button class="btn btn-primary w-full mt-2" onclick={finishAndClose}>Done</button>
           </div>
