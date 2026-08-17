@@ -15,7 +15,7 @@
   import StatCard from './lib/components/StatCard.svelte';
   import { initialTheme, applyTheme } from './lib/logic/theme.js';
   import { startSync } from './lib/logic/sync.js';
-  import { Trophy, Sun, Moon, Activity, Zap, Users } from '@lucide/svelte';
+  import { Trophy, Sun, Moon, Activity, Zap, Users, Crown } from '@lucide/svelte';
 
   startSync(); // begin sharing state with the group (fails soft to local-only)
 
@@ -66,9 +66,12 @@
     </div>
     <div class="hero-shell hero-shell-gold shrink-0" style="padding:1.5px;">
     <div class="hero-shell-inner flex items-center gap-1 pl-2.5 pr-1 py-1">
-      <div class="min-w-0 max-w-[96px]">
+      <div class="min-w-0 max-w-[104px]">
         <div class="text-[8px] uppercase tracking-[0.14em] font-bold leading-none" style="color:var(--accent-gold);">Top</div>
-        <div class="h-display font-bold text-[12px] tx truncate leading-tight">{leader ? leader.name : '—'}</div>
+        <div class="flex items-center gap-1 mt-0.5">
+          <Crown size={12} strokeWidth={2.25} style="color:var(--accent-gold);flex-shrink:0;" />
+          <div class="h-display font-bold text-[12px] tx truncate leading-tight">{leader ? leader.name : '—'}</div>
+        </div>
       </div>
       <span class="w-px h-6 shrink-0" style="background:var(--border);"></span>
       <button class="theme-toggle relative w-7 h-7 grid place-items-center rounded-[var(--radius-sm)] tx-muted shrink-0 active:scale-90"
