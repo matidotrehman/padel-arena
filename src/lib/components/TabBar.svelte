@@ -1,14 +1,12 @@
 <script>
-  import { LayoutGrid, CirclePlus, Shuffle, Award, FlaskConical, Clock, Database } from '@lucide/svelte';
+  import { LayoutGrid, Shuffle, Award, Clock, Database } from '@lucide/svelte';
 
   let { active = $bindable('leaderboard') } = $props();
 
   const tabs = [
     { id: 'leaderboard', icon: LayoutGrid, label: 'Board' },
-    { id: 'log', icon: CirclePlus, label: 'Log' },
     { id: 'americano', icon: Shuffle, label: 'Mixer' },
-    { id: 'badges', icon: Award, label: 'Badges' },
-    { id: 'chemistry', icon: FlaskConical, label: 'Chem' },
+    { id: 'stats', icon: Award, label: 'Stats' },
     { id: 'history', icon: Clock, label: 'History' },
     { id: 'manage', icon: Database, label: 'Data' },
   ];
@@ -20,7 +18,7 @@
             backdrop-filter:blur(12px);
             -webkit-backdrop-filter:blur(12px);
             border-top:1px solid var(--border);">
-  <div class="max-w-lg mx-auto grid grid-cols-7 gap-0.5 py-1.5">
+  <div class="max-w-lg mx-auto grid grid-cols-5 gap-0.5 py-1.5">
     {#each tabs as t}
       {@const on = active === t.id}
       {@const Icon = t.icon}

@@ -6,7 +6,8 @@
   import { checkPin } from '../logic/pin.js';
   import Avatar from './Avatar.svelte';
   import RoundCard from './RoundCard.svelte';
-  import { Volleyball, User, Shuffle, ScrollText, Pencil, Trash2, Trophy } from '@lucide/svelte';
+  import MatchLogger from './MatchLogger.svelte';
+  import { Volleyball, User, Shuffle, ScrollText, Pencil, Trash2, Trophy, Plus, X } from '@lucide/svelte';
 
   // JS equivalents of the CSS --ease-spring / --ease-out-smooth tokens, for use in
   // Svelte's fly/fade transitions (which take an easing function, not a CSS string).
@@ -76,6 +77,7 @@
 
   let confirmDel = $state(null);
   let sessionDetail = $state(null); // an americano match to show in full
+  let showLogger = $state(false); // one-off Fixed Partners / Individual match sheet
 
   // ---- Edit flow: scores only, teams/participants stay fixed ----
   let editTarget = $state(null); // the match being edited
@@ -142,9 +144,14 @@
 </script>
 
 <div class="space-y-3">
-  <div class="card">
-    <h3 class="font-display font-bold neon-text">Match History</h3>
-    <p class="text-sm tx-muted">Every logged game, newest first. Delete a mistake and everyone's stats recalculate automatically.</p>
+  <div class="card flex items-center gap-3">
+    <div class="min-w-0 flex-1">
+      <h3 class="font-display font-bold neon-text">Match History</h3>
+      <p class="text-sm tx-muted">Every logged game, newest first. Delete a mistake and everyone's stats recalculate automatically.</p>
+    </div>
+    <button class="btn btn-primary shrink-0 !px-3 !py-2 text-sm" onclick={() => (showLogger = true)}>
+      <Plus size={16} strokeWidth={2.5} /> Log
+    </button>
   </div>
 
   {#if list.length === 0}
@@ -279,6 +286,23 @@
       </div>
 
       <button class="btn btn-ghost w-full" onclick={() => (sessionDetail = null)}>Close</button>
+    </div>
+  </div>
+{/if}
+
+{#if showLogger}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 backdrop-blur-sm" style="background:var(--scrim);"
+       transition:fade={{ duration: 150, easing: easeOutSmooth }}
+       onclick={(e) => { if (e.target === e.currentTarget) showLogger = false; }} role="presentation">
+    <div class="glass rounded-[var(--radius-lg)] w-full max-w-md max-h-[85dvh] overflow-y-auto p-5 space-y-4"
+         transition:fly={{ y: 30, duration: 250, easing: easeSpring }} role="dialog" aria-modal="true" tabindex="-1">
+      <div class="flex items-center justify-between gap-2">
+        <div class="h-display font-extrabold text-lg tx flex items-center gap-1.5"><Volleyball size={16} strokeWidth={2.25} /> Log a match</div>
+        <button class="tx-muted hover:text-hot p-1 transition-transform duration-150 hover:scale-110 active:scale-90"
+                style="transition-timing-function:var(--ease-spring);" aria-label="Close"
+                onclick={() => (showLogger = false)}><X size={18} strokeWidth={2.25} /></button>
+      </div>
+      <MatchLogger onlogged={() => (showLogger = false)} />
     </div>
   </div>
 {/if}

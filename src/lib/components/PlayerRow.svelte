@@ -55,7 +55,7 @@
     {#if chips.length}
       <div class="flex flex-wrap items-center gap-1 mt-1 max-w-full" style="padding-right:12px;">
         {#each visibleChips as c}
-          <span class="chip-neutral" style="background:{c.accent}26;border-color:{c.accent}40;color:{c.accent};">
+          <span class="chip-neutral" style="background:{c.accent}33;border-color:{c.accent}66;color:{c.accent};">
             <span class="chip-dot" style="background:{c.accent};"></span>{c.title}
           </span>
         {/each}

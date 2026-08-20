@@ -55,10 +55,10 @@ html.dark {
   --tx: #f5faf7;
   --tx-muted: #bccdc4;
   --tx-faint: #87998f;
-  --surface-1: #142720;
-  --surface-2: #1a3027;
-  --border: #2c443a;
-  --border-hi: rgba(190, 255, 220, 0.09);
+  --surface-1: #1d3c2e;
+  --surface-2: #234a37;
+  --border: #3e6553;
+  --border-hi: rgba(190, 255, 220, 0.16);
   --input-bg: #142720;
   --accent-fg: #3ecf96;
   --accent-bright: #2bb37e;

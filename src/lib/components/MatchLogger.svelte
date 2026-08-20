@@ -5,6 +5,8 @@
   import Avatar from './Avatar.svelte';
   import { X, Trophy, Volleyball, Check } from '@lucide/svelte';
 
+  let { onlogged } = $props();
+
   let mode = $state('fixed'); // 'fixed' | 'individual'
 
   // ---- Fixed partners state ----
@@ -39,6 +41,7 @@
     pop(0.5, 0.4);
     a1 = a2 = b1 = b2 = '';
     sets = [{ a: '', b: '' }];
+    onlogged?.();
   }
 
   // ---- Individual state ----
@@ -70,6 +73,7 @@
     selected = {};
     points = {};
     winners = {};
+    onlogged?.();
   }
 </script>
 
