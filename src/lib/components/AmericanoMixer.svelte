@@ -3,7 +3,7 @@
   import { flip } from 'svelte/animate';
   import { players, matches, mergeAmericano } from '../stores/store.js';
   import { session, startSession, updateRoundScore, endSession } from '../stores/session.js';
-  import { generateSchedule, suggestedRounds, sessionTotals, roundPlayed, pairKey } from '../logic/americano.js';
+  import { generateSchedule, sessionTotals, roundPlayed, pairKey } from '../logic/americano.js';
   import { headToHead } from '../logic/h2h.js';
   import { celebrate } from '../logic/celebrate.js';
   import RoundCard from './RoundCard.svelte';
@@ -33,18 +33,7 @@
 
   // ---- Setup state ----
   let picked = $state(new Set());
-  let minutes = $state(150);
-  // Rounds default to the time-based suggestion, but the "Matches" slider
-  // below lets you set an exact count directly — once touched, it stops
-  // following the minutes slider.
-  let rounds = $state(suggestedRounds(150));
-  let roundsCustomized = $state(false);
-  $effect(() => {
-    if (!roundsCustomized) rounds = suggestedRounds(minutes);
-  });
-  function onRoundsInput() {
-    roundsCustomized = true;
-  }
+  let rounds = $state(12);
   const canStart = $derived(picked.size >= 4);
   const restPerRound = $derived(Math.max(0, picked.size - 4)); // single court: 4 play, rest sit
 
@@ -161,20 +150,10 @@
 
     <div class="card space-y-2">
       <div class="label flex justify-between !mb-0">
-        <span>Session length</span>
-        <span class="neon-text">{minutes} min · {rounds} rounds</span>
-      </div>
-      <input type="range" min="60" max="210" step="15" bind:value={minutes}
-             class="w-full accent-[color:var(--accent-fg)]" />
-      <div class="flex justify-between text-[10px] tx-faint"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
-    </div>
-
-    <div class="card space-y-2">
-      <div class="label flex justify-between !mb-0">
         <span>Matches</span>
         <span class="neon-text">{rounds} rounds</span>
       </div>
-      <input type="range" min="4" max="20" step="1" bind:value={rounds} oninput={onRoundsInput}
+      <input type="range" min="4" max="20" step="1" bind:value={rounds}
              class="w-full accent-[color:var(--accent-fg)]" />
       <div class="flex justify-between text-[10px] tx-faint"><span>4</span><span>9</span><span>20</span></div>
     </div>
