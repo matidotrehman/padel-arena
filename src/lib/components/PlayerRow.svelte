@@ -33,7 +33,9 @@
        border-right:1px solid var(--border);
        border-bottom:1px solid var(--border);
        border-left:3px solid ${stripe};
-       box-shadow:var(--shadow-card);`}
+       box-shadow:var(--shadow-card);
+       backdrop-filter:blur(20px);
+       -webkit-backdrop-filter:blur(20px);`}
 >
   <div class="flex items-center justify-center shrink-0" style="width:20px;min-height:38px;">
     <span class="mono font-bold text-[13px] leading-none" style="color:{numberColor};">{rank}</span>
@@ -50,7 +52,7 @@
       <span class="tx-faint">·</span>
       <span>{player.pointsWon}pts</span>
       <span class="tx-faint">·</span>
-      <span style="color:{diff >= 0 ? 'var(--accent-fg)' : 'var(--color-hot)'};">{diff >= 0 ? '+' : ''}{diff}</span>
+      <span style="color:{diff >= 0 ? 'var(--color-positive)' : 'var(--color-hot)'};">{diff >= 0 ? '+' : ''}{diff}</span>
     </div>
     {#if chips.length}
       <div class="flex flex-wrap items-center gap-1 mt-1 max-w-full" style="padding-right:12px;">
@@ -67,7 +69,7 @@
   </div>
 
   <div class="text-right shrink-0">
-    <div class="mono font-bold leading-none text-[18px]" style="color:var(--accent-fg);">
+    <div class="mono font-extrabold leading-none text-[19px]" style="color:var(--accent-volt);">
       {byWinrate ? wr : avg}{#if byWinrate}<span class="text-[10px] align-top">%</span>{/if}
     </div>
     <div class="text-[9px] uppercase tracking-[0.12em] tx-faint font-bold mt-0.5">

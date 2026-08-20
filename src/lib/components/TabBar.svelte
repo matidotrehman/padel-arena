@@ -1,18 +1,12 @@
 <script>
-  import { LayoutGrid, Shuffle, Award, Clock, Database } from '@lucide/svelte';
+  import { NAV_TABS } from '../nav.js';
 
   let { active = $bindable('leaderboard') } = $props();
 
-  const tabs = [
-    { id: 'leaderboard', icon: LayoutGrid, label: 'Board' },
-    { id: 'americano', icon: Shuffle, label: 'Mixer' },
-    { id: 'stats', icon: Award, label: 'Stats' },
-    { id: 'history', icon: Clock, label: 'History' },
-    { id: 'manage', icon: Database, label: 'Data' },
-  ];
+  const tabs = NAV_TABS;
 </script>
 
-<nav class="fixed bottom-0 inset-x-0 z-40 px-1"
+<nav class="fixed bottom-0 inset-x-0 z-40 px-1 lg:hidden"
      style="padding-bottom:env(safe-area-inset-bottom);
             background:color-mix(in srgb, var(--page-solid) 82%, transparent);
             backdrop-filter:blur(12px);

@@ -12,7 +12,7 @@
 </script>
 
 <div class="space-y-4">
-  <div class="relative grid grid-cols-2 rounded-[var(--radius-sm)] p-1" style="background:var(--surface-1);border:1px solid var(--border);">
+  <div class="relative grid grid-cols-2 rounded-[var(--radius-sm)] p-1" style="background:var(--surface-1);border:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
     <div class="absolute top-1 bottom-1 rounded-[var(--radius-sm)] pointer-events-none"
          style="width:calc(50% - 0.25rem);
                 left:0.25rem;

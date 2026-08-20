@@ -19,7 +19,7 @@
   <!-- Ranking mode switch -->
   <div class="flex items-center justify-end gap-2 px-0.5">
     <span class="text-[10px] uppercase tracking-[0.12em] tx-faint font-bold">Rank by</span>
-    <div class="relative inline-flex rounded-[var(--radius-sm)] p-0.5" style="background:var(--surface-1);border:1px solid var(--border);">
+    <div class="relative inline-flex rounded-[var(--radius-sm)] p-0.5" style="background:var(--surface-1);border:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
       <div class="absolute top-0.5 bottom-0.5 rounded-[var(--radius-sm)]"
            style="width:calc(50% - 2px);
                   left:2px;

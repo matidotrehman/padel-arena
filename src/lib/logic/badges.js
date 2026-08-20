@@ -9,7 +9,7 @@ import { fixedOutcome } from '../stores/store.js';
 import { Crown, Flame, Shield, Handshake, Construction, Snowflake, TrendingUpDown, Hammer, Gem, Trophy, Medal, Award } from '@lucide/svelte';
 
 export const BADGE_DEFS = [
-  { key: 'el-rey', title: 'El Rey', icon: Crown, blurb: '#1 on the leaderboard', accent: '#C9A227' },
+  { key: 'el-rey', title: 'El Rey', icon: Crown, blurb: '#1 on the leaderboard', accent: '#FFD700' },
   { key: 'on-fire', title: 'On Fire', icon: Flame, blurb: '3+ match win streak in a single session', accent: '#F97316' },
   { key: 'brick-wall', title: 'Brick Wall', icon: Shield, blurb: 'Best point differential', accent: '#2BB37E' },
   { key: 'ideal-partner', title: 'Ideal Partner', icon: Handshake, blurb: 'Best win rate across different teammates', accent: '#3ECF96' },
@@ -136,10 +136,10 @@ function idealPartner(matches, byId) {
 // that's simply playing well pushes everyone into Gold/Diamond at once, and
 // a weak group never sees a Bronze.
 export const TIER_DEFS = [
-  { key: 'tier-diamond', title: 'Diamond', icon: Gem, accent: '#60D3FF' },
+  { key: 'tier-diamond', title: 'Diamond', icon: Gem, accent: '#00E5FF' },
   { key: 'tier-gold', title: 'Gold', icon: Trophy, accent: '#FFD700' },
-  { key: 'tier-silver', title: 'Silver', icon: Medal, accent: '#C0C0C0' },
-  { key: 'tier-bronze', title: 'Bronze', icon: Award, accent: '#CD7F32' },
+  { key: 'tier-silver', title: 'Silver', icon: Medal, accent: '#CBD5E1' },
+  { key: 'tier-bronze', title: 'Bronze', icon: Award, accent: '#D97706' },
 ];
 
 // Sorted ratings for every all-time player who has ever played a game (not
