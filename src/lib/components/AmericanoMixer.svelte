@@ -1,9 +1,10 @@
 <script>
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { players, mergeAmericano } from '../stores/store.js';
+  import { players, matches, mergeAmericano } from '../stores/store.js';
   import { session, startSession, updateRoundScore, endSession } from '../stores/session.js';
-  import { generateSchedule, suggestedRounds, sessionTotals, roundPlayed } from '../logic/americano.js';
+  import { generateSchedule, suggestedRounds, sessionTotals, roundPlayed, pairKey } from '../logic/americano.js';
+  import { headToHead } from '../logic/h2h.js';
   import { celebrate } from '../logic/celebrate.js';
   import RoundCard from './RoundCard.svelte';
   import Avatar from './Avatar.svelte';
@@ -33,7 +34,17 @@
   // ---- Setup state ----
   let picked = $state(new Set());
   let minutes = $state(150);
-  const rounds = $derived(suggestedRounds(minutes));
+  // Rounds default to the time-based suggestion, but the "Matches" slider
+  // below lets you set an exact count directly — once touched, it stops
+  // following the minutes slider.
+  let rounds = $state(suggestedRounds(150));
+  let roundsCustomized = $state(false);
+  $effect(() => {
+    if (!roundsCustomized) rounds = suggestedRounds(minutes);
+  });
+  function onRoundsInput() {
+    roundsCustomized = true;
+  }
   const canStart = $derived(picked.size >= 4);
   const restPerRound = $derived(Math.max(0, picked.size - 4)); // single court: 4 play, rest sit
 
@@ -52,12 +63,29 @@
 
   let generating = $state(false);
 
+  // How many times each pair has already partnered across ALL past matches
+  // (fixed 2v2 + previous Americano sessions) — fed into generateSchedule as
+  // a soft bias so a pair that's under-paired in history gets pulled toward
+  // pairing more this session, instead of every session starting blind.
+  function historicalPartnerCounts(ids) {
+    const h = headToHead($matches);
+    const map = {};
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const rec = (h[ids[i]] && h[ids[i]][ids[j]]) || { partW: 0, partL: 0 };
+        map[pairKey(ids[i], ids[j])] = rec.partW + rec.partL;
+      }
+    }
+    return map;
+  }
+
   async function start() {
     if (!canStart || generating) return;
     generating = true;
     await new Promise((r) => setTimeout(r)); // let the busy state paint first
     const ids = $players.filter((p) => picked.has(p.id)).map((p) => p.id);
-    const { rounds: schedule } = generateSchedule(ids, rounds);
+    const priorPartnerCount = historicalPartnerCounts(ids);
+    const { rounds: schedule } = generateSchedule(ids, rounds, priorPartnerCount);
     generating = false;
     startSession(ids, schedule);
   }
@@ -139,6 +167,16 @@
       <input type="range" min="60" max="210" step="15" bind:value={minutes}
              class="w-full accent-[color:var(--accent-fg)]" />
       <div class="flex justify-between text-[10px] tx-faint"><span>1h</span><span>2.5h</span><span>3.5h</span></div>
+    </div>
+
+    <div class="card space-y-2">
+      <div class="label flex justify-between !mb-0">
+        <span>Matches</span>
+        <span class="neon-text">{rounds} rounds</span>
+      </div>
+      <input type="range" min="4" max="20" step="1" bind:value={rounds} oninput={onRoundsInput}
+             class="w-full accent-[color:var(--accent-fg)]" />
+      <div class="flex justify-between text-[10px] tx-faint"><span>4</span><span>9</span><span>20</span></div>
     </div>
 
     <button class="btn btn-primary w-full text-lg" disabled={!canStart || generating} onclick={start}

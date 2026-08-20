@@ -9,6 +9,7 @@ function zeroedFrom(p) {
     id: p.id,
     name: p.name,
     avatarColor: p.avatarColor,
+    avatarIcon: p.avatarIcon,
     matchesPlayed: 0,
     wins: 0,
     losses: 0,
