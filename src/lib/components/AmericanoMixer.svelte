@@ -1,10 +1,9 @@
 <script>
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { players, matches, mergeAmericano } from '../stores/store.js';
+  import { players, mergeAmericano } from '../stores/store.js';
   import { session, startSession, updateRoundScore, endSession } from '../stores/session.js';
-  import { generateSchedule, sessionTotals, roundPlayed, pairKey } from '../logic/americano.js';
-  import { headToHead } from '../logic/h2h.js';
+  import { sessionTotals, roundPlayed } from '../logic/americano.js';
   import { celebrate } from '../logic/celebrate.js';
   import RoundCard from './RoundCard.svelte';
   import Avatar from './Avatar.svelte';
@@ -52,31 +51,35 @@
 
   let generating = $state(false);
 
-  // How many times each pair has already partnered across ALL past matches
-  // (fixed 2v2 + previous Americano sessions) — fed into generateSchedule as
-  // a soft bias so a pair that's under-paired in history gets pulled toward
-  // pairing more this session, instead of every session starting blind.
-  function historicalPartnerCounts(ids) {
-    const h = headToHead($matches);
-    const map = {};
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        const rec = (h[ids[i]] && h[ids[i]][ids[j]]) || { partW: 0, partL: 0 };
-        map[pairKey(ids[i], ids[j])] = rec.partW + rec.partL;
-      }
-    }
-    return map;
+  // The schedule search can take several seconds (a time-boxed local-search
+  // optimiser) — running it in a worker keeps the main thread free so the
+  // "Mixing…" spinner actually animates instead of freezing for the duration.
+  function runScheduleWorker(playerIds, roundCount) {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(new URL('../logic/americano.worker.js', import.meta.url), { type: 'module' });
+      worker.onmessage = (e) => {
+        worker.terminate();
+        if (e.data.ok) resolve(e.data.result);
+        else reject(new Error(e.data.error));
+      };
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(err);
+      };
+      worker.postMessage({ playerIds, rounds: roundCount });
+    });
   }
 
   async function start() {
     if (!canStart || generating) return;
     generating = true;
-    await new Promise((r) => setTimeout(r)); // let the busy state paint first
     const ids = $players.filter((p) => picked.has(p.id)).map((p) => p.id);
-    const priorPartnerCount = historicalPartnerCounts(ids);
-    const { rounds: schedule } = generateSchedule(ids, rounds, priorPartnerCount);
-    generating = false;
-    startSession(ids, schedule);
+    try {
+      const { rounds: schedule } = await runScheduleWorker(ids, rounds);
+      startSession(ids, schedule);
+    } finally {
+      generating = false;
+    }
   }
 
   // ---- Live session ----

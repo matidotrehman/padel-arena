@@ -24,10 +24,7 @@
 //     rhythm: Active, Active, Rest), unless mathematically unavoidable
 //   - every 2v2 matchup ({A,B} vs {C,D}) is strictly unique across all rounds
 //   - partnerships spread evenly (no "ghost pairs" at 0 while others are
-//     over-coupled at 3+) — optionally counting prior sessions too, via
-//     `priorPartnerCount` (see generateSchedule below), so a pair that's
-//     under-paired across match history gets pulled toward pairing more
-//     this session instead of the count resetting to 0 every time
+//     over-coupled at 3+)
 //   - opponent encounters spread evenly
 //
 // Active-streak rhythm is a 3-tier hierarchy, not a single cap:
@@ -57,7 +54,7 @@ const FALLBACK_CONSEC_ACTIVE = 3;
 // PENALTY.STREAK_HARD_BAN, the single highest-weighted tier in the search.
 const HARD_BAN_CONSEC_ACTIVE = 4;
 
-export const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
 // All 3 ways to split 4 players into two teams of 2.
 function pairingsOf([a, b, c, d]) {
@@ -161,14 +158,7 @@ const PENALTY = {
 // Fully recompute every tracked statistic from a candidate schedule. This is
 // O(rounds) and allocation-light, so it's cheap enough to call on every
 // local-search trial (thousands of times per generation).
-//
-// `priorPartnerCount` (optional, keyed by `pairKey`) folds in how many times
-// each pair has ALREADY partnered outside this schedule (e.g. across past
-// sessions) purely for the partner-imbalance signal below — it only nudges
-// which pairs this session's search favours, it never affects the session's
-// own hard constraints (duplicate matchups, the per-session partner cap,
-// streaks, sit equity), so a caller that omits it gets identical behaviour.
-function evaluateSchedule(schedule, ids, priorPartnerCount = {}) {
+function evaluateSchedule(schedule, ids) {
   const sitCount = Object.fromEntries(ids.map((id) => [id, 0]));
   const partnerCount = {};
   const opponentCount = {};
@@ -225,11 +215,7 @@ function evaluateSchedule(schedule, ids, priorPartnerCount = {}) {
 
   const allPairs = [];
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) allPairs.push(pairKey(ids[i], ids[j]));
-  // History-aware totals (this session + prior) drive the imbalance/ghost-pair
-  // signal, so a pair that's under-paired historically gets pulled toward
-  // pairing more THIS session — the raw `partnerCount` above (session-only)
-  // is left untouched for the cap-excess check below.
-  const partnerVals = allPairs.map((k) => (partnerCount[k] || 0) + (priorPartnerCount[k] || 0));
+  const partnerVals = allPairs.map((k) => partnerCount[k] || 0);
   const partnerMin = partnerVals.length ? Math.min(...partnerVals) : 0;
   const partnerMax = partnerVals.length ? Math.max(...partnerVals) : 0;
   const partnerSpread = partnerMax - partnerMin;
@@ -298,7 +284,7 @@ function costOf(ev, partnerCap) {
 // Phase 1 — construction: one randomised greedy pass
 // =============================================================================
 
-function buildInitialSchedule(playerIds, rounds, partnerCap, priorPartnerCount = {}) {
+function buildInitialSchedule(playerIds, rounds, partnerCap) {
   const ids = shuffle([...playerIds]);
   const activeCombos = combinations(ids, 4);
 
@@ -348,10 +334,7 @@ function buildInitialSchedule(playerIds, rounds, partnerCap, priorPartnerCount =
         const consecPartner = (lastPartnerKeys.has(pkA) ? 1 : 0) + (lastPartnerKeys.has(pkB) ? 1 : 0);
         const mk = matchupKey(teamA, teamB);
         const matchupRepeat = get(matchupCount, mk);
-        // History-aware: a pair already under-paired across past sessions
-        // scores cheaper here, so construction naturally reaches for them.
-        const partnerCost =
-          (newPartnerA + get(priorPartnerCount, pkA)) ** 2 + (newPartnerB + get(priorPartnerCount, pkB)) ** 2;
+        const partnerCost = newPartnerA ** 2 + newPartnerB ** 2;
         let oppCost = 0;
         for (const a of teamA) for (const b of teamB) oppCost += (get(opponentCount, pairKey(a, b)) + 1) ** 2;
 
@@ -436,7 +419,7 @@ function withRound(schedule, idx, option) {
 // option lowers the schedule's cost the most, if any does. Returns whether
 // anything improved. Mutates `state.current`/`state.currentCost` in place and
 // updates `state.best`/`state.bestCost` whenever a new low is found.
-function greedySweep(state, options, ids, deadline, partnerCap, priorPartnerCount) {
+function greedySweep(state, options, ids, deadline, partnerCap) {
   let improved = false;
   const order = shuffle([...Array(state.current.length).keys()]);
 
@@ -447,7 +430,7 @@ function greedySweep(state, options, ids, deadline, partnerCap, priorPartnerCoun
     let localBestCost = state.currentCost;
     for (const opt of options) {
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids, priorPartnerCount), partnerCap);
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
       if (cost < localBestCost) {
         localBestCost = cost;
         localBest = candidate;
@@ -475,15 +458,15 @@ function greedySweep(state, options, ids, deadline, partnerCap, priorPartnerCoun
 // point is tracked separately (`state.best`) and is always what's returned —
 // an exploration burst that wanders off can never make the final result
 // worse, only potentially better.
-function refineSchedule(initial, ids, deadline, partnerCap, priorPartnerCount = {}) {
+function refineSchedule(initial, ids, deadline, partnerCap) {
   const options = allRoundOptions(ids);
-  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids, priorPartnerCount), partnerCap), best: initial, bestCost: Infinity };
+  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids), partnerCap), best: initial, bestCost: Infinity };
   state.bestCost = state.currentCost;
   state.best = state.current;
 
   // Phase 1 — hill-climb straight to the nearest local optimum.
   while (Date.now() < deadline && state.bestCost > 0) {
-    if (!greedySweep(state, options, ids, deadline, partnerCap, priorPartnerCount)) break;
+    if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
   }
   if (state.bestCost === 0) return state.best;
 
@@ -500,7 +483,7 @@ function refineSchedule(initial, ids, deadline, partnerCap, priorPartnerCount = 
       const idx = Math.floor(Math.random() * state.current.length);
       const opt = options[Math.floor(Math.random() * options.length)];
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids, priorPartnerCount), partnerCap);
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
       const delta = cost - state.currentCost;
       if (delta <= 0 || Math.random() < Math.exp(-delta / temperature)) {
         state.current = candidate;
@@ -516,7 +499,7 @@ function refineSchedule(initial, ids, deadline, partnerCap, priorPartnerCount = 
 
     // Exploitative re-climb from wherever the burst landed.
     while (Date.now() < deadline) {
-      if (!greedySweep(state, options, ids, deadline, partnerCap, priorPartnerCount)) break;
+      if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
       if (state.bestCost === 0) return state.best;
     }
   }
@@ -536,15 +519,9 @@ function refineSchedule(initial, ids, deadline, partnerCap, priorPartnerCount = 
  *
  * @param {string[]} playerIds - 4 or more player ids
  * @param {number} rounds - number of games (each game rests N-4 players)
- * @param {Object.<string, number>} [priorPartnerCount] - how many times each
- *   pair (keyed by `pairKey`) has already partnered outside this schedule —
- *   e.g. across past sessions — so the search favours historically
- *   under-paired pairs THIS session. Purely a soft bias on top of the
- *   existing partner-imbalance objective; omit for the old session-only
- *   behaviour.
  * @returns {{ rounds: Array, fairness: object }}
  */
-export function generateSchedule(playerIds, rounds = 12, priorPartnerCount = {}) {
+export function generateSchedule(playerIds, rounds = 12) {
   if (playerIds.length < 4) {
     throw new Error('Pick at least 4 players for an Americano.');
   }
@@ -563,11 +540,31 @@ export function generateSchedule(playerIds, rounds = 12, priorPartnerCount = {})
   // more search time. A mixer generation may take a couple of seconds; that's
   // an accepted trade for a well-mixed schedule.
   const budgetMs = Math.min(5000, 1200 + ids.length * 150 + rounds * 40);
-  const deadline = Date.now() + budgetMs;
 
-  const initial = buildInitialSchedule(ids, rounds, partnerCap, priorPartnerCount);
-  const schedule = refineSchedule(initial, ids, deadline, partnerCap, priorPartnerCount);
-  const ev = evaluateSchedule(schedule, ids, priorPartnerCount);
+  // Every rest-count-spread promise ("nobody's sit-out count differs from
+  // anyone else's by more than 1") is achievable whenever it's mathematically
+  // possible — but a single randomised construct+refine pass occasionally
+  // (empirically ~2-5% of the time) settles into a local optimum that leaves
+  // it 1 short. A full retry with a fresh random start almost always fixes
+  // it, so retry a few times — keeping whichever attempt scores best overall
+  // — rather than paying a permanently longer search budget on every single
+  // generation just to cover a rare miss.
+  let best = null;
+  let bestCost = Infinity;
+  const MAX_ATTEMPTS = 4;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const deadline = Date.now() + budgetMs;
+    const initial = buildInitialSchedule(ids, rounds, partnerCap);
+    const schedule = refineSchedule(initial, ids, deadline, partnerCap);
+    const ev = evaluateSchedule(schedule, ids);
+    const cost = costOf(ev, partnerCap);
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = { schedule, ev };
+    }
+    if (ev.sitSpread <= 1) break;
+  }
+  const { schedule, ev } = best;
 
   return {
     rounds: schedule,
