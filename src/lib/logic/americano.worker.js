@@ -5,9 +5,9 @@
 import { generateSchedule } from './americano.js';
 
 self.onmessage = (e) => {
-  const { playerIds, rounds } = e.data;
+  const { playerIds, rounds, avoidPartners } = e.data;
   try {
-    const result = generateSchedule(playerIds, rounds);
+    const result = generateSchedule(playerIds, rounds, { avoidPartners });
     self.postMessage({ ok: true, result });
   } catch (err) {
     self.postMessage({ ok: false, error: err?.message || String(err) });

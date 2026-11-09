@@ -65,6 +65,22 @@ function pairingsOf([a, b, c, d]) {
   ];
 }
 
+// Drop any split that would partner two players from `avoidSet` (a set of
+// pairKey strings — e.g. the current bottom-2-ranked players, kept apart as
+// partners since they'd be the weakest pair on court). This is a hard
+// exclusion, not a penalty: with only 3 possible splits per 4-player group
+// and one forbidden pair, at least 2 splits always remain, so it's always
+// satisfiable. If every split were somehow excluded (only possible with
+// multiple overlapping avoid-pairs), fall back to the unfiltered list rather
+// than deadlock the search.
+function withoutAvoidedPairings(pairings, avoidSet) {
+  if (!avoidSet || avoidSet.size === 0) return pairings;
+  const kept = pairings.filter(
+    ([teamA, teamB]) => !avoidSet.has(pairKey(...teamA)) && !avoidSet.has(pairKey(...teamB))
+  );
+  return kept.length ? kept : pairings;
+}
+
 // Canonical, side-independent identity of a whole 2v2 game — used to keep
 // every matchup unique across the schedule.
 function matchupKey(teamA, teamB) {
@@ -262,8 +278,8 @@ function capExcessCost(ev, partnerCap) {
   return cost;
 }
 
-function costOf(ev, partnerCap) {
-  const sitSpreadExtra = Math.max(0, ev.sitSpread - 1);
+function costOf(ev, partnerCap, idealSitSpread = 1) {
+  const sitSpreadExtra = Math.max(0, ev.sitSpread - idealSitSpread);
   const partnerSpreadExtra = Math.max(0, ev.partnerSpread - 1) + ev.overCoupled;
   const opponentSpreadExtra = Math.max(0, ev.opponentSpread - 1);
   return (
@@ -284,7 +300,7 @@ function costOf(ev, partnerCap) {
 // Phase 1 — construction: one randomised greedy pass
 // =============================================================================
 
-function buildInitialSchedule(playerIds, rounds, partnerCap) {
+function buildInitialSchedule(playerIds, rounds, partnerCap, avoidSet) {
   const ids = shuffle([...playerIds]);
   const activeCombos = combinations(ids, 4);
 
@@ -324,7 +340,7 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
         else if (streak === FALLBACK_CONSEC_ACTIVE) consecExcess++;
       }
 
-      for (const [teamA, teamB] of pairingsOf(active)) {
+      for (const [teamA, teamB] of withoutAvoidedPairings(pairingsOf(active), avoidSet)) {
         const pkA = pairKey(...teamA);
         const pkB = pairKey(...teamB);
         const newPartnerA = get(partnerCount, pkA) + 1;
@@ -398,11 +414,11 @@ function buildInitialSchedule(playerIds, rounds, partnerCap) {
 
 // Every legal replacement for a single round: every possible 4-player subset,
 // paired every possible way. Same list is reused to repair every round.
-function allRoundOptions(ids) {
+function allRoundOptions(ids, avoidSet) {
   const options = [];
   for (const active of combinations(ids, 4)) {
     const resting = ids.filter((id) => !active.includes(id));
-    for (const [teamA, teamB] of pairingsOf(active)) {
+    for (const [teamA, teamB] of withoutAvoidedPairings(pairingsOf(active), avoidSet)) {
       options.push({ teamA, teamB, resting });
     }
   }
@@ -419,7 +435,7 @@ function withRound(schedule, idx, option) {
 // option lowers the schedule's cost the most, if any does. Returns whether
 // anything improved. Mutates `state.current`/`state.currentCost` in place and
 // updates `state.best`/`state.bestCost` whenever a new low is found.
-function greedySweep(state, options, ids, deadline, partnerCap) {
+function greedySweep(state, options, ids, deadline, partnerCap, idealSitSpread) {
   let improved = false;
   const order = shuffle([...Array(state.current.length).keys()]);
 
@@ -430,7 +446,7 @@ function greedySweep(state, options, ids, deadline, partnerCap) {
     let localBestCost = state.currentCost;
     for (const opt of options) {
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap, idealSitSpread);
       if (cost < localBestCost) {
         localBestCost = cost;
         localBest = candidate;
@@ -458,15 +474,15 @@ function greedySweep(state, options, ids, deadline, partnerCap) {
 // point is tracked separately (`state.best`) and is always what's returned —
 // an exploration burst that wanders off can never make the final result
 // worse, only potentially better.
-function refineSchedule(initial, ids, deadline, partnerCap) {
-  const options = allRoundOptions(ids);
-  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids), partnerCap), best: initial, bestCost: Infinity };
+function refineSchedule(initial, ids, deadline, partnerCap, avoidSet, idealSitSpread) {
+  const options = allRoundOptions(ids, avoidSet);
+  const state = { current: initial, currentCost: costOf(evaluateSchedule(initial, ids), partnerCap, idealSitSpread), best: initial, bestCost: Infinity };
   state.bestCost = state.currentCost;
   state.best = state.current;
 
   // Phase 1 — hill-climb straight to the nearest local optimum.
   while (Date.now() < deadline && state.bestCost > 0) {
-    if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
+    if (!greedySweep(state, options, ids, deadline, partnerCap, idealSitSpread)) break;
   }
   if (state.bestCost === 0) return state.best;
 
@@ -483,7 +499,7 @@ function refineSchedule(initial, ids, deadline, partnerCap) {
       const idx = Math.floor(Math.random() * state.current.length);
       const opt = options[Math.floor(Math.random() * options.length)];
       const candidate = withRound(state.current, idx, opt);
-      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap);
+      const cost = costOf(evaluateSchedule(candidate, ids), partnerCap, idealSitSpread);
       const delta = cost - state.currentCost;
       if (delta <= 0 || Math.random() < Math.exp(-delta / temperature)) {
         state.current = candidate;
@@ -499,7 +515,7 @@ function refineSchedule(initial, ids, deadline, partnerCap) {
 
     // Exploitative re-climb from wherever the burst landed.
     while (Date.now() < deadline) {
-      if (!greedySweep(state, options, ids, deadline, partnerCap)) break;
+      if (!greedySweep(state, options, ids, deadline, partnerCap, idealSitSpread)) break;
       if (state.bestCost === 0) return state.best;
     }
   }
@@ -519,13 +535,18 @@ function refineSchedule(initial, ids, deadline, partnerCap) {
  *
  * @param {string[]} playerIds - 4 or more player ids
  * @param {number} rounds - number of games (each game rests N-4 players)
+ * @param {{ avoidPartners?: [string, string][] }} [options] - avoidPartners:
+ *   pairs of player ids that must never be partnered together (e.g. the
+ *   current bottom-2-ranked players, kept apart since they'd be the weakest
+ *   pair on court). Enforced as a hard constraint, not a soft preference.
  * @returns {{ rounds: Array, fairness: object }}
  */
-export function generateSchedule(playerIds, rounds = 12) {
+export function generateSchedule(playerIds, rounds = 12, options = {}) {
   if (playerIds.length < 4) {
     throw new Error('Pick at least 4 players for an Americano.');
   }
   const ids = [...playerIds];
+  const avoidSet = new Set((options.avoidPartners || []).map(([a, b]) => pairKey(a, b)));
 
   // Hard cap on how many times any two players may partner: the minimum
   // achievable given the maths (total partnership slots = rounds * 2, spread
@@ -536,33 +557,47 @@ export function generateSchedule(playerIds, rounds = 12) {
   const totalPairs = (ids.length * (ids.length - 1)) / 2;
   const partnerCap = Math.max(1, Math.ceil((rounds * 2) / totalPairs));
 
+  // The best achievable sit-count spread: 0 when the rest slots (rounds *
+  // (N-4)) divide evenly across all N players — as they do for 6 players /
+  // 12 rounds, where everybody sits exactly 4 and plays exactly 8 — otherwise
+  // 1 (the standard floor/ceil split when they don't divide evenly). The cost
+  // function is told this so it never treats a spread of 1 as "free" when 0
+  // is actually reachable.
+  const idealSitSpread = (rounds * (ids.length - 4)) % ids.length === 0 ? 0 : 1;
+
   // Time budget scales gently with player/round count — harder instances get
   // more search time. A mixer generation may take a couple of seconds; that's
   // an accepted trade for a well-mixed schedule.
   const budgetMs = Math.min(5000, 1200 + ids.length * 150 + rounds * 40);
 
   // Every rest-count-spread promise ("nobody's sit-out count differs from
-  // anyone else's by more than 1") is achievable whenever it's mathematically
-  // possible — but a single randomised construct+refine pass occasionally
-  // (empirically ~2-5% of the time) settles into a local optimum that leaves
-  // it 1 short. A full retry with a fresh random start almost always fixes
-  // it, so retry a few times — keeping whichever attempt scores best overall
-  // — rather than paying a permanently longer search budget on every single
-  // generation just to cover a rare miss.
+  // anyone else's by more than the achievable minimum") is reachable whenever
+  // it's mathematically possible — but a single randomised construct+refine
+  // pass occasionally (empirically ~2-5% of the time, more often alongside an
+  // avoid-partners constraint) settles into a local optimum that leaves it 1
+  // short. A full retry with a fresh random start almost always fixes it, so
+  // retry — keeping whichever attempt scores best overall — until it's hit or
+  // the attempt budget runs out, rather than paying a permanently longer
+  // search budget on every single generation just to cover a rare miss.
   let best = null;
   let bestCost = Infinity;
-  const MAX_ATTEMPTS = 4;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+  // Empirically, a stuck attempt rarely escapes its local optimum no matter
+  // how much extra time it's given — a fresh random restart is far more
+  // effective than searching longer, so attempts stay short and plentiful
+  // rather than few and long.
+  const MAX_ATTEMPTS = 15;
+  const overallDeadline = Date.now() + MAX_ATTEMPTS * budgetMs + 3000; // hard cap so a stubborn instance can't hang the worker
+  for (let attempt = 0; attempt < MAX_ATTEMPTS && Date.now() < overallDeadline; attempt++) {
     const deadline = Date.now() + budgetMs;
-    const initial = buildInitialSchedule(ids, rounds, partnerCap);
-    const schedule = refineSchedule(initial, ids, deadline, partnerCap);
+    const initial = buildInitialSchedule(ids, rounds, partnerCap, avoidSet);
+    const schedule = refineSchedule(initial, ids, deadline, partnerCap, avoidSet, idealSitSpread);
     const ev = evaluateSchedule(schedule, ids);
-    const cost = costOf(ev, partnerCap);
+    const cost = costOf(ev, partnerCap, idealSitSpread);
     if (cost < bestCost) {
       bestCost = cost;
       best = { schedule, ev };
     }
-    if (ev.sitSpread <= 1) break;
+    if (ev.sitSpread <= idealSitSpread) break;
   }
   const { schedule, ev } = best;
 

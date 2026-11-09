@@ -1,7 +1,7 @@
 <script>
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { players, mergeAmericano } from '../stores/store.js';
+  import { players, ranked, mergeAmericano } from '../stores/store.js';
   import { session, startSession, updateRoundScore, endSession } from '../stores/session.js';
   import { sessionTotals, roundPlayed } from '../logic/americano.js';
   import { celebrate } from '../logic/celebrate.js';
@@ -36,6 +36,16 @@
   const canStart = $derived(picked.size >= 4);
   const restPerRound = $derived(Math.max(0, picked.size - 4)); // single court: 4 play, rest sit
 
+  // The two lowest-ranked players among who's playing would be the weakest
+  // possible pair on court, so they're never partnered together (they can
+  // still face off as opponents). Based on current standings, so it adapts
+  // automatically as rankings shift.
+  const weakPair = $derived.by(() => {
+    const pickedRanked = $ranked.filter((p) => picked.has(p.id));
+    if (pickedRanked.length < 4) return null;
+    return pickedRanked.slice(-2);
+  });
+
   // Pre-select everyone currently in the roster (they can deselect who's absent).
   $effect(() => {
     if (picked.size === 0 && !$session && $players.length) {
@@ -54,7 +64,7 @@
   // The schedule search can take several seconds (a time-boxed local-search
   // optimiser) — running it in a worker keeps the main thread free so the
   // "Mixing…" spinner actually animates instead of freezing for the duration.
-  function runScheduleWorker(playerIds, roundCount) {
+  function runScheduleWorker(playerIds, roundCount, avoidPartners) {
     return new Promise((resolve, reject) => {
       const worker = new Worker(new URL('../logic/americano.worker.js', import.meta.url), { type: 'module' });
       worker.onmessage = (e) => {
@@ -66,7 +76,7 @@
         worker.terminate();
         reject(err);
       };
-      worker.postMessage({ playerIds, rounds: roundCount });
+      worker.postMessage({ playerIds, rounds: roundCount, avoidPartners });
     });
   }
 
@@ -74,8 +84,9 @@
     if (!canStart || generating) return;
     generating = true;
     const ids = $players.filter((p) => picked.has(p.id)).map((p) => p.id);
+    const avoidPartners = weakPair ? [weakPair.map((p) => p.id)] : [];
     try {
-      const { rounds: schedule } = await runScheduleWorker(ids, rounds);
+      const { rounds: schedule } = await runScheduleWorker(ids, rounds, avoidPartners);
       startSession(ids, schedule);
     } finally {
       generating = false;
@@ -148,6 +159,11 @@
         <p class="text-[11px] tx-faint mt-2 text-center">
           4 on court each round{restPerRound > 0 ? ` · ${restPerRound} rest and rotate` : ' · nobody sits out'}
         </p>
+        {#if weakPair}
+          <p class="text-[11px] tx-faint mt-1 text-center">
+            {weakPair[0].name} & {weakPair[1].name} won't be partnered (lowest ranked)
+          </p>
+        {/if}
       {/if}
     </div>
 
